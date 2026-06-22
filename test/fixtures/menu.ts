@@ -38,7 +38,7 @@ function setupTest() {
     // tabindex makes it focusable, allowing us to test focus restore issues.
     cssButton('My Menu',
       testId('btn1'),
-      { tabindex: "-1" },
+      { tabindex: "0" },
       menu(makeMenu, {
         parentSelectorToMark: '.' + cssExample.className,
         trigger: ['click', {keys: ['Enter']}],

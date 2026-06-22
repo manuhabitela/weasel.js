@@ -15,6 +15,33 @@ describe('menu', () => {
     await driver.find('.test-reset').click();
   });
 
+  it('should use ARIA attributes', async function() {
+    const trigger = await driver.find('.test-btn1');
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+    assert.notOk(await trigger.getAttribute('aria-controls'));
+
+    await trigger.click();
+    await assertOpen('.test-menu1', true);
+
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
+    const listId = await trigger.getAttribute('aria-controls');
+    assert.match(listId!, /^weasel-menu-list-\d+$/);
+    assert.equal(await trigger.getAttribute('aria-owns'), listId);
+
+    const list = await driver.find(`#${listId}`);
+    assert.equal(await list.getAttribute('role'), 'menu');
+
+    const menuItem = await driver.find('.test-cut');
+    assert.equal(await menuItem.getAttribute('role'), 'menuitem');
+    assert.equal(await menuItem.getAttribute('tabindex'), '-1');
+
+    await driver.sendKeys(Key.ESCAPE);
+    await assertOpen('.test-menu1', false);
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+    assert.notOk(await trigger.getAttribute('aria-controls'));
+    assert.notOk(await trigger.getAttribute('aria-owns'));
+  });
+
   it('should toggle on trigger click', async function() {
     // Open menu, check we see something.
     await driver.find('.test-btn1').click();
