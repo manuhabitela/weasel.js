@@ -115,7 +115,7 @@ export function select<T>(
       // Note we only set 'selected' when an <option> is created; we are not subscribing to obs.
       // This is to reduce the amount of subscriptions, esp. when number of options is large.
       return menuItem(() => { obs.set(obj.value); },
-        Object.assign({disabled: obj.disabled, selected: obj.value === obs.get()},
+        Object.assign({disabled: obj.disabled, selected: obj.value === obs.get(), role: 'menuitem'},
           obj.disabled ? {class: 'disabled'} : {}),
         renderOption(obj)
       );
@@ -153,6 +153,7 @@ class Select<T> extends BaseMenu {
 
     const menuListId = generateListId();
     this._menuContent.id = menuListId;
+    this._menuContent.setAttribute('role', 'menu');
     const trigger = ctl.getTriggerElem() as HTMLElement;
     trigger.setAttribute('aria-expanded', 'true');
     trigger.setAttribute('aria-controls', menuListId);
