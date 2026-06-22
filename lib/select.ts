@@ -1,6 +1,6 @@
 import {dom, DomArg, DomContents, DomElementArg, onElem, styled} from 'grainjs';
 import {BindableValue, Computed, MaybeObsArray, Observable} from 'grainjs';
-import {BaseMenu, defaultMenuOptions, IMenuOptions, menuItem, MenuDomArgs} from './menu';
+import {BaseMenu, defaultMenuOptions, IMenuOptions, menuItem} from './menu';
 import {IOpenController, IPopupOptions, PopupControl, setPopupToFunc} from './popup';
 
 export interface IOptionFull<T> {
@@ -19,8 +19,8 @@ export interface ISelectUserOptions {
   defaultLabel?: string;   // Button label displayed when no value is selected.
   buttonArrow?: DomArg;    // DOM for what is typically the chevron on the select button.
   menuCssClass?: string;   // If provided, applies the css class to the menu container.
-  menuDomArgs?: MenuDomArgs;  // Optional DOM args applied to the menu container.
   menuWrapCssClass?: string;  // See menu.ts.
+  modifyContent?: IMenuOptions['modifyContent'];
   buttonCssClass?: string;  // If provided, applies the css class to the select button.
   // If disabled, adds the .disabled class to the select button and prevents opening.
   disabled?: BindableValue<boolean>;
@@ -89,7 +89,7 @@ export function select<T>(
   const selectOptions: ISelectOptions = {
     ...defaultMenuOptions,
     menuCssClass: options.menuCssClass,
-    menuDomArgs: options.menuDomArgs,
+    modifyContent: options.modifyContent,
     menuWrapCssClass: options.menuWrapCssClass,
     attach: options.attach === undefined ? defaultMenuOptions.attach : options.attach,
     trigger: [(triggerElem: Element, ctl: PopupControl) => {

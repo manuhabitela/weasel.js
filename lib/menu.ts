@@ -21,7 +21,6 @@ import {IOpenController, IPopupContent, IPopupOptions, PopupControl, setPopupToF
 import {ISelectOptions} from './select';
 
 export type MenuCreateFunc = (ctl: IOpenController) => DomElementArg[];
-export type MenuDomArgs  = DomElementArg[] | ((ctl: IOpenController) => DomElementArg[]);
 
 type MenuClassCons = (context: any, ctl: IOpenController, items: DomElementArg[], options?: IMenuOptions) => BaseMenu;
 
@@ -50,11 +49,12 @@ export interface IMenuOptions extends IPopupOptions {
   // selects the last one.
   allowNothingSelected?: boolean;
 
-  // You can pass additional DOM args to the menu container, optionally passing them through a function
-  // that receives the menu controller as an argument if needed.
-  //    menuDomArgs: [ {"data-random-attribute": "random value"} ]
-  //    menuDomArgs: (ctl) => [ (menuEl) => { attachRandomThingToCtl(menuEl, ctl) } ]
-  menuDomArgs?: MenuDomArgs;
+  // For specific use cases, you can modify the menu `ul` element the usual grainjs way,
+  // and/or act on the tied weasel controller.
+  //    modifyContent: (menuEl, ctl) => ({ "data-random-attribute": "random value" })
+  //    modifyContent: (menuEl, ctl) => attachRandomThingToCtl(ctl)
+  //    modifyContent: (menuEl, ctl) => [attachRandomThingToCtl(ctl), {"data-random": "value"}]
+  modifyContent?: (menuEl: HTMLElement, ctl: IOpenController) => DomElementArg;
 }
 
 export interface ISubMenuOptions {
@@ -180,9 +180,6 @@ export class BaseMenu extends Disposable implements IPopupContent {
 
     this._allowNothingSelected = Boolean(options.allowNothingSelected);
 
-    const menuDomArgs = typeof options.menuDomArgs === 'function' ?
-      options.menuDomArgs(ctl) : (options.menuDomArgs || []);
-
     this.content = cssMenuWrap({class: options.menuWrapCssClass || ''},
       this._menuContent = cssMenu({class: options.menuCssClass || ''},
         items,
@@ -196,7 +193,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
             ArrowLeft: () => ctl.close(0),
           } : {},
         }),
-        ...menuDomArgs,
+        (el) => options.modifyContent?.(el, ctl)
       ),
       // Events set on the parent of _menuContent receive events bubbled up from submenus.
       dom.on('click', (ev) => isInSelectableItem(ev.target as Element) ? ctl.close(0) : ev.stopPropagation()),
