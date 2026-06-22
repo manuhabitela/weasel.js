@@ -67,7 +67,13 @@ export function select<T>(
   });
 
   // Select button and associated event/disposal DOM.
-  const selectBtn: HTMLElement = cssSelectBtn({tabIndex: '0', class: options.buttonCssClass || ''},
+  const selectBtn: HTMLElement = cssSelectBtn(
+    {
+      tabIndex: '0',
+      class: options.buttonCssClass || '',
+      'aria-haspopup': 'true',
+      'aria-expanded': 'false',
+    },
     dom.autoDispose(selected),
     options.disabled ? dom.cls('disabled', options.disabled) : null,
     cssBtnText(
@@ -145,6 +151,16 @@ class Select<T> extends BaseMenu {
   constructor(ctl: IOpenController, items: DomElementArg[], options: ISelectOptions = {}) {
     super(ctl, items, options);
 
+    const menuListId = generateListId();
+    this._menuContent.id = menuListId;
+    const trigger = ctl.getTriggerElem() as HTMLElement;
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.setAttribute('aria-controls', menuListId);
+    this.onDispose(() => {
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.removeAttribute('aria-controls');
+    });
+
     // On keydown, search for the first element with a matching label.
     onElem(this._menuContent, 'keydown', (ev) => {
       const sel = this._keyState.add(ev.key);
@@ -212,6 +228,15 @@ class SelectKeyState<T> {
 
 export function getOptionFull<T>(option: IOption<T>): IOptionFull<T> {
   return (typeof option === "string") ? {value: option, label: option} : (option as IOptionFull<T>);
+}
+
+const selectListIdPrefix = 'weasel-select-list-';
+function generateListId() {
+  for (let i = 0; ; i++) {
+    if (!document.getElementById(selectListIdPrefix + i)) {
+      return selectListIdPrefix + i;
+    }
+  }
 }
 
 // Prevents select button text overflow.
