@@ -94,7 +94,8 @@ export function select<T>(
       dom.onElem(triggerElem, 'click', () => isDisabled() || ctl.toggle());
       dom.onKeyElem(triggerElem as HTMLElement, 'keydown', {
         ArrowDown: () => isDisabled() || ctl.open(),
-        ArrowUp: () => isDisabled() || ctl.open()
+        ArrowUp: () => isDisabled() || ctl.open(),
+        Enter: () => isDisabled() || ctl.open(),
       });
     }],
     selectLabelOnOpen: () => selected.get().label,
