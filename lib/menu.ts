@@ -13,7 +13,7 @@
  * Clicks on items will normally propagate to the menu, where they get caught and close the menu.
  * If a click on an item should not close the menu, the item should stop the click's propagation.
  */
-import {dom, domDispose, DomElementArg, DomElementMethod, DomMethod, EventCB, styled} from 'grainjs';
+import {dom, domDispose, DomElementArg, DomElementMethod, DomMethod, EventCB, IDomArgs, styled} from 'grainjs';
 import {Disposable, onKeyDown, onKeyElem} from 'grainjs';
 import defaultsDeep = require('lodash/defaultsDeep');
 import mergeWith = require('lodash/mergeWith');
@@ -507,12 +507,17 @@ export const cssMenuItemLink = styled('a', `
   }
 `);
 
-export const cssMenuDivider = styled('div', `
+const _cssMenuDivider = styled('div', `
   height: 1px;
   width: 100%;
   margin: 4px 0;
   background-color: #D9D9D9;
 `);
+
+export const cssMenuDivider = Object.assign(
+  (...args: IDomArgs<HTMLDivElement>) => _cssMenuDivider({ 'aria-hidden': 'true' }, ...args ),
+  _cssMenuDivider,
+);
 
 export const cssExpandIcon = styled('div.weasel-popup-expand-icon', `
   flex: none;
