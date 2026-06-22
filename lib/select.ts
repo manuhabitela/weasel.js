@@ -220,7 +220,11 @@ const cssBtnText = styled('div', `
   text-overflow: ellipsis;
 `);
 
-const cssSelectBtn = styled('div', `
+const cssSelectBtn = styled('button', `
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  opacity: 1;
   position: relative;
   display: flex;
   justify-content: space-between;
