@@ -75,6 +75,16 @@ export function menu(createFunc: MenuCreateFunc, options?: IMenuOptions): DomEle
   return (elem) => menuElem(elem, createFunc, options);
 }
 export function menuElem(triggerElem: Element, createFunc: MenuCreateFunc, options: IMenuOptions = {}) {
+  // try to automatically fix potentially bad uses of trigger elements: make sure they are exposed as buttons
+  // to assistive technologies, and reachable with the keyboard.
+  if (triggerElem.tagName !== 'BUTTON') {
+    if (!triggerElem.getAttribute('role')) {
+      triggerElem.setAttribute('role', 'button');
+    }
+    if (!triggerElem.getAttribute('tabindex')) {
+      triggerElem.setAttribute('tabindex', '0');
+    }
+  }
   return baseElem((...args) => Menu.create(...args), triggerElem, createFunc, options);
 }
 
@@ -138,7 +148,7 @@ export const defaultMenuOptions: IMenuOptions = {
   boundaries: 'viewport',
   placement: 'bottom-start',
   showDelay: 0,
-  trigger: ['click'],
+  trigger: ['click', {keys: ['Enter']}],
   modifiers: {
     // gpuAcceleration (true by default) causes a tiny UI artifact: attempting to drag a link, at
     // least in Firefox, causes it to be dragged from a different location on the screen where it
