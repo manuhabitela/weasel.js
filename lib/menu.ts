@@ -75,6 +75,7 @@ export function menu(createFunc: MenuCreateFunc, options?: IMenuOptions): DomEle
   return (elem) => menuElem(elem, createFunc, options);
 }
 export function menuElem(triggerElem: Element, createFunc: MenuCreateFunc, options: IMenuOptions = {}) {
+  triggerElem.setAttribute('aria-expanded', 'false');
   // try to automatically fix potentially bad uses of trigger elements: make sure they are exposed as buttons
   // to assistive technologies, and reachable with the keyboard.
   if (triggerElem.tagName !== 'BUTTON') {
@@ -156,6 +157,42 @@ export const defaultMenuOptions: IMenuOptions = {
     computeStyle: {gpuAcceleration: false}
   },
 };
+
+const menuListIdPrefix = 'weasel-menu-list-';
+
+export function generateMenuListId(): string {
+  for (let i = 0; ; i++) {
+    if (!document.getElementById(menuListIdPrefix + i)) {
+      return menuListIdPrefix + i;
+    }
+  }
+}
+
+/**
+ * Update the few ARIA attributes related to toggling on/off a menu popup related to a trigger element.
+ */
+export function updateListAria(
+  menu: BaseMenu,
+  triggerElem: Element,
+  listElem: HTMLElement,
+  options: { role: 'menu' | 'listbox' },
+): string {
+  const listId = generateMenuListId();
+  listElem.id = listId;
+  listElem.setAttribute('role', options.role);
+  if (options.role === 'listbox') {
+    listElem.setAttribute('aria-orientation', 'vertical');
+  }
+  triggerElem.setAttribute('aria-expanded', 'true');
+  triggerElem.setAttribute('aria-controls', listId);
+  triggerElem.setAttribute('aria-owns', listId);
+  menu.onDispose(() => {
+    triggerElem.setAttribute('aria-expanded', 'false');
+    triggerElem.removeAttribute('aria-controls');
+    triggerElem.removeAttribute('aria-owns');
+  });
+  return listId;
+}
 
 /**
  * Implementation of the BaseMenu. Extended by Menu and Select.
@@ -312,6 +349,11 @@ export class BaseMenu extends Disposable implements IPopupContent {
 export class Menu extends BaseMenu implements IPopupContent {
   constructor(ctl: IOpenController, items: DomElementArg[], options: IMenuOptions = {}) {
     super(ctl, items, options);
+
+    Array.from(this._menuContent.children).forEach(child => {
+      child.setAttribute('role', 'menuitem');
+    });
+    updateListAria(this, ctl.getTriggerElem(), this._menuContent, {role: 'menu'});
 
     setTimeout(() =>
       (options.selectOnOpen ? this.nextIndex() : this._menuContent.focus()), 0);
