@@ -323,6 +323,17 @@ describe('menu', () => {
 
   });
 
+  it('should support the modifyContent argument to customize the dropdown element', async function() {
+    await driver.find('.test-btn-modify-content').click();
+    await assertOpen('.test-modify-content-menu', true);
+
+    const menuEl = await driver.find('.test-modify-content-menu');
+    assert.include(await menuEl.getAttribute('class'), 'modify-content-open-class');
+
+    await driver.sendKeys(Key.ESCAPE);
+    await assertOpen('.test-modify-content-menu', false);
+  });
+
   it('should support opening a popup', async function() {
 
     // open the first menu
