@@ -98,4 +98,10 @@ describe('select', () => {
     assert.isTrue(await driver.findContent('li', /apricot/).matches('[class*=-sel]'));
     await driver.sendKeys(Key.ESCAPE);
   });
+
+  it('should support the modifyContent argument to customize the dropdown element', async function() {
+    await driver.find('.test-btn3').click();
+    assert.equal(await driver.findWait('.test-select-dropdown', 100).getAttribute('data-modify-content-attr'), 'select');
+    await driver.sendKeys(Key.ESCAPE);
+  });
 });

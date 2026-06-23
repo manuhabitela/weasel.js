@@ -20,6 +20,7 @@ export interface ISelectUserOptions {
   buttonArrow?: DomArg;    // DOM for what is typically the chevron on the select button.
   menuCssClass?: string;   // If provided, applies the css class to the menu container.
   menuWrapCssClass?: string;  // See menu.ts.
+  modifyContent?: IMenuOptions['modifyContent'];
   buttonCssClass?: string;  // If provided, applies the css class to the select button.
   // If disabled, adds the .disabled class to the select button and prevents opening.
   disabled?: BindableValue<boolean>;
@@ -88,6 +89,7 @@ export function select<T>(
   const selectOptions: ISelectOptions = {
     ...defaultMenuOptions,
     menuCssClass: options.menuCssClass,
+    modifyContent: options.modifyContent,
     menuWrapCssClass: options.menuWrapCssClass,
     attach: options.attach === undefined ? defaultMenuOptions.attach : options.attach,
     trigger: [(triggerElem: Element, ctl: PopupControl) => {

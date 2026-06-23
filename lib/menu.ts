@@ -48,6 +48,13 @@ export interface IMenuOptions extends IPopupOptions {
   // down on the last item selects the first one, and pressing the arrow up on the first item
   // selects the last one.
   allowNothingSelected?: boolean;
+
+  // For specific use cases, you can modify the menu `ul` element the usual grainjs way,
+  // and/or act on the tied weasel controller.
+  //    modifyContent: (menuEl, ctl) => ({ "data-random-attribute": "random value" })
+  //    modifyContent: (menuEl, ctl) => attachRandomThingToCtl(ctl)
+  //    modifyContent: (menuEl, ctl) => [attachRandomThingToCtl(ctl), {"data-random": "value"}]
+  modifyContent?: (menuEl: HTMLElement, ctl: IOpenController) => DomElementArg;
 }
 
 export interface ISubMenuOptions {
@@ -186,6 +193,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
             ArrowLeft: () => ctl.close(0),
           } : {},
         }),
+        (el) => options.modifyContent?.(el, ctl)
       ),
       // Events set on the parent of _menuContent receive events bubbled up from submenus.
       dom.on('click', (ev) => isInSelectableItem(ev.target as Element) ? ctl.close(0) : ev.stopPropagation()),

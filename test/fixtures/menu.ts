@@ -58,6 +58,17 @@ function setupTest() {
       testId('btn5'),
       menu(makeMenu, {allowNothingSelected: true}),
     ),
+    cssButton('My Menu with modifyContent arg',
+      testId('btn-modify-content'),
+      menu(() => [
+        testId('modify-content-menu'),
+        menuItem(() => console.log('Menu item: ModifyContent'), 'ModifyContent', testId('modify-content-item')),
+      ], {
+        modifyContent: (menuEl, ctl) => {
+          ctl.setOpenClass(menuEl, 'modify-content-open-class');
+        },
+      }),
+    ),
     makeSelect(),
     makeComplexSelect(),
     cssInputContainer(
@@ -182,7 +193,11 @@ function makeSelect() {
   const btnElem = dom('div', testId('btn3'));
   const menuCssClass = dom('div', testId('select-dropdown')).className;
   return dom('div', { style: `width: 200px;` },
-    select(fruit, fruits, { buttonCssClass: btnElem.className, menuCssClass })
+    select(fruit, fruits, {
+      buttonCssClass: btnElem.className,
+      menuCssClass,
+      modifyContent: () => ({'data-modify-content-attr': 'select'})
+    })
   );
 }
 
