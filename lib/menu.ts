@@ -17,6 +17,7 @@ import {dom, domDispose, DomElementArg, DomElementMethod, DomMethod, EventCB, ID
 import {Disposable, onKeyDown, onKeyElem} from 'grainjs';
 import defaultsDeep = require('lodash/defaultsDeep');
 import mergeWith = require('lodash/mergeWith');
+import uniqueId = require('lodash/uniqueId');
 import {IOpenController, IPopupContent, IPopupOptions, PopupControl, setPopupToFunc} from './popup';
 import {ISelectOptions} from './select';
 
@@ -64,6 +65,8 @@ export interface ISubMenuOptions {
   action?: (item: HTMLElement, event: Event) => void; // If provided, called when the item is clicked.
 }
 
+const weaselIdPrefix = 'weasel-element-';
+
 /**
  * Attaches a menu to its trigger element, for example:
  *    dom('div', 'Open menu', menu((ctl) => [
@@ -85,6 +88,9 @@ export function menuElem(triggerElem: Element, createFunc: MenuCreateFunc, optio
     if (!triggerElem.getAttribute('tabindex')) {
       triggerElem.setAttribute('tabindex', '0');
     }
+  }
+  if (!triggerElem.id) {
+    triggerElem.id = uniqueId(weaselIdPrefix);
   }
   return baseElem((...args) => Menu.create(...args), triggerElem, createFunc, options);
 }
@@ -158,15 +164,6 @@ export const defaultMenuOptions: IMenuOptions = {
   },
 };
 
-const menuListIdPrefix = 'weasel-menu-list-';
-
-export function generateMenuListId(): string {
-  for (let i = 0; ; i++) {
-    if (!document.getElementById(menuListIdPrefix + i)) {
-      return menuListIdPrefix + i;
-    }
-  }
-}
 
 /**
  * Update the few ARIA attributes related to toggling on/off a menu popup related to a trigger element.
@@ -177,7 +174,7 @@ export function updateListAria(
   listElem: HTMLElement,
   options: { role: 'menu' | 'listbox' },
 ): string {
-  const listId = generateMenuListId();
+  const listId = uniqueId(weaselIdPrefix);
   listElem.id = listId;
   listElem.setAttribute('role', options.role);
   if (options.role === 'listbox') {
@@ -349,10 +346,10 @@ export class BaseMenu extends Disposable implements IPopupContent {
 export class Menu extends BaseMenu implements IPopupContent {
   constructor(ctl: IOpenController, items: DomElementArg[], options: IMenuOptions = {}) {
     super(ctl, items, options);
-
     Array.from(this._menuContent.children).forEach(child => {
       child.setAttribute('role', 'menuitem');
     });
+    this._menuContent.setAttribute('aria-labelledby', ctl.getTriggerElem().id);
     updateListAria(this, ctl.getTriggerElem(), this._menuContent, {role: 'menu'});
 
     setTimeout(() =>

@@ -26,7 +26,7 @@ describe('select', () => {
 
     assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
     const listId = await trigger.getAttribute('aria-controls');
-    assert.match(listId!, /^weasel-menu-list-\d+$/);
+    assert.match(listId!, /^weasel-element-\d+$/);
     assert.equal(await trigger.getAttribute('aria-owns'), listId);
 
     const list = await driver.find(`#${listId}`);
