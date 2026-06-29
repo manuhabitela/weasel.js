@@ -119,18 +119,16 @@ export function select<T>(
       const selected = obj.value === obs.get();
       return menuItem(
         () => { obs.set(obj.value); },
-        Object.assign(
-          {
-            disabled: obj.disabled,
-            selected,
-            // aria attrs expect specific values as strings so we can't directly
-            // rely on `obj.disabled` or `selected` as values
-            'aria-disabled': obj.disabled ? "true" : undefined,
-            'aria-selected': selected ? "true" : "false",
-            role: 'option'
-          },
-          obj.disabled ? {class: 'disabled'} : {}
-        ),
+        {
+          disabled: obj.disabled,
+          ...(obj.disabled ? {class: 'disabled'} : {}),
+          selected,
+          // aria attrs expect specific values as strings so we can't directly
+          // rely on `obj.disabled` or `selected` as values
+          'aria-disabled': obj.disabled ? "true" : undefined,
+          'aria-selected': selected ? "true" : "false",
+          role: 'option',
+        },
         renderOption(obj)
       );
     })
