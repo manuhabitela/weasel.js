@@ -18,6 +18,7 @@ import {Disposable, onKeyDown, onKeyElem} from 'grainjs';
 import defaultsDeep = require('lodash/defaultsDeep');
 import mergeWith = require('lodash/mergeWith');
 import uniqueId = require('lodash/uniqueId');
+import isEqual = require('lodash/isEqual');
 import {IOpenController, IPopupContent, IPopupOptions, PopupControl, setPopupToFunc} from './popup';
 import {ISelectOptions} from './select';
 
@@ -78,10 +79,6 @@ export function menu(createFunc: MenuCreateFunc, options?: IMenuOptions): DomEle
   return (elem) => menuElem(elem, createFunc, options);
 }
 export function menuElem(triggerElem: Element, createFunc: MenuCreateFunc, options: IMenuOptions = {}) {
-  triggerElem.setAttribute('aria-expanded', 'false');
-  if (!triggerElem.id) {
-    triggerElem.id = uniqueId(weaselIdPrefix);
-  }
   return baseElem((...args) => Menu.create(...args), triggerElem, createFunc, options);
 }
 
@@ -108,6 +105,20 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
   // the exact value from options if present.
   options = mergeWith({}, defaultMenuOptions, options,
     (objValue: any, srcValue: any) => Array.isArray(srcValue) ? srcValue : undefined);
+
+  const isInput = triggerElem.tagName.toLowerCase() === 'input';
+  if (!isInput) {
+    const useExpandedAttr = options.trigger?.some(t =>
+      t === "click" || isEqual(t, {keys: ['Enter']})
+    );
+    if (useExpandedAttr) {
+      triggerElem.setAttribute('aria-expanded', 'false');
+    }
+    if (!triggerElem.id) {
+      triggerElem.id = uniqueId(weaselIdPrefix);
+    }
+  }
+
   setPopupToFunc(triggerElem,
     (ctl, opts) => createFn(null, ctl, createFunc(ctl), defaultsDeep(opts, options)),
     options);
@@ -163,25 +174,28 @@ export function updateListAria(
   triggerElem: Element,
   listElem: HTMLElement,
   options: { role: 'menu' | 'listbox' },
-): string {
+) {
   const listId = uniqueId(weaselIdPrefix);
   listElem.id = listId;
   listElem.setAttribute('role', options.role);
   if (options.role === 'listbox') {
     listElem.setAttribute('aria-orientation', 'vertical');
   }
-  triggerElem.setAttribute('aria-expanded', 'true');
+  if (triggerElem.hasAttribute('aria-expanded')) {
+    triggerElem.setAttribute('aria-expanded', 'true');
+  }
   triggerElem.setAttribute('aria-controls', listId);
   triggerElem.setAttribute('aria-owns', listId);
   if (options.role === 'menu' && triggerElem.id) {
     listElem.setAttribute('aria-labelledby', triggerElem.id);
   }
   menu.onDispose(() => {
-    triggerElem.setAttribute('aria-expanded', 'false');
+    if (triggerElem.hasAttribute('aria-expanded')) {
+      triggerElem.setAttribute('aria-expanded', 'false');
+    }
     triggerElem.removeAttribute('aria-controls');
     triggerElem.removeAttribute('aria-owns');
   });
-  return listId;
 }
 
 /**
