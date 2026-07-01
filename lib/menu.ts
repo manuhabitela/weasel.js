@@ -79,16 +79,6 @@ export function menu(createFunc: MenuCreateFunc, options?: IMenuOptions): DomEle
 }
 export function menuElem(triggerElem: Element, createFunc: MenuCreateFunc, options: IMenuOptions = {}) {
   triggerElem.setAttribute('aria-expanded', 'false');
-  // try to automatically fix potentially bad uses of trigger elements: make sure they are exposed as buttons
-  // to assistive technologies, and reachable with the keyboard.
-  if (triggerElem.tagName !== 'BUTTON') {
-    if (!triggerElem.getAttribute('role')) {
-      triggerElem.setAttribute('role', 'button');
-    }
-    if (!triggerElem.getAttribute('tabindex')) {
-      triggerElem.setAttribute('tabindex', '0');
-    }
-  }
   if (!triggerElem.id) {
     triggerElem.id = uniqueId(weaselIdPrefix);
   }
