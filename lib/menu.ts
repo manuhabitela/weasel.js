@@ -127,6 +127,9 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
 /**
  * Implements a single menu item.
  *
+ * The item is generated with tabindex="-1". To generate a menu item that is not selectable, add the "disabled" class
+ * to the additional args.
+ *
  * The appearance of the menuItem components can be changed by setting the followingcss variables
  * in the parent project:
  *    --weaseljs-selected-background-color
@@ -136,8 +139,35 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
 export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args: DomElementArg[]): Element {
   return cssMenuItem(
     ...args,
-    dom.on('click', (ev, elem) => elem.classList.contains('disabled') || action(elem, ev)),
-    onKeyDown({Enter$: (ev, elem) => action(elem, ev)})
+    dom.on('click', (ev, elem) => {
+      const item = findMenuItem(elem);
+      if (item?.classList.contains('disabled')) {
+        return;
+      }
+      const isCheckbox = item?.getAttribute('role') === 'menuitemcheckbox'
+        && (ev.target as HTMLElement).tagName.toLowerCase() === 'input'
+        && (ev.target as HTMLInputElement).type === 'checkbox';
+      // If we click a checkbox inside a menuitemcheckbox, we assume we want the checkbox to be visually toggled, so
+      // we let default behavior occur. Without this exception, clicking the checkbox itself would not update its UI.
+      // Otherwise, make sure to prevent default element action to avoid issues (e.g. clicking a label triggers
+      // a click on the tied input, and we don't want that).
+      if (!isCheckbox) {
+        ev.preventDefault();
+      }
+      action(elem, ev);
+    }),
+    // `tabindex="-1"` is automatically added by the onKeyDown helper, making the item selectable by default.
+    onKeyDown({
+      "Enter$": (ev, elem) => {
+        action(elem, ev)
+      },
+      // Space key is used to toggle a checkbox item without closing the parent menu.
+      " $": (ev, elem) => {
+        if (elem.getAttribute('role') === 'menuitemcheckbox') {
+          action(elem, ev);
+        }
+      }
+    })
   );
 }
 
@@ -247,7 +277,16 @@ export class BaseMenu extends Disposable implements IPopupContent {
         (el) => options.modifyContent?.(el, ctl)
       ),
       // Events set on the parent of _menuContent receive events bubbled up from submenus.
-      dom.on('click', (ev) => isInSelectableItem(ev.target as Element) ? ctl.close(0) : ev.stopPropagation()),
+      dom.on('click', (ev) => {
+        if (isInSelectableItem(ev.target as Element)) {
+          // Items might be checkboxes, in that case we don't want to close the menu on click
+          if (findMenuItem(ev.target as Element)?.getAttribute('role') !== 'menuitemcheckbox') {
+            ctl.close(0);
+          }
+        } else {
+          ev.stopPropagation();
+        }
+      }),
       options.isSubMenu ? null :
         onKeyDown({
           Escape: () => ctl.close(0),
@@ -359,7 +398,10 @@ export class Menu extends BaseMenu implements IPopupContent {
   constructor(ctl: IOpenController, items: DomElementArg[], options: IMenuOptions = {}) {
     super(ctl, items, options);
     for (const child of this._menuContent.children) {
-      child.setAttribute('role', 'menuitem');
+      const existingRole = child.getAttribute('role');
+      if (!existingRole || !['menuitem', 'menuitemcheckbox'].includes(existingRole)) {
+        child.setAttribute('role', 'menuitem');
+      }
     }
     updateListAria(this, ctl.getTriggerElem(), this._menuContent, {role: 'menu'});
 
@@ -400,13 +442,17 @@ function isSelectable(elem: Element): elem is HTMLElement {
     (elem as HTMLElement).offsetHeight > 0;
 }
 
+function findMenuItem(elem: Element) {
+  return findAncestorChild(elem.closest('.' + cssMenu.className)!, elem);
+}
+
 /**
  * Whether the given element is part of a selectable item. A click on it will close menus.
  */
 function isInSelectableItem(elem: Element): boolean {
   // Similar to _findTargetItem, but finds the menu item (direct child of cssMenu) containing
   // elem, regardless of which menu or submenu it's in, and returns whether it's selectable.
-  const item = findAncestorChild(elem.closest('.' + cssMenu.className)!, elem);
+  const item = findMenuItem(elem);
   return item ? isSelectable(item) : false;
 }
 

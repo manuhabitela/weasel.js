@@ -69,6 +69,16 @@ function setupTest() {
         },
       }),
     ),
+    cssButton('My Menu with only checkbox items',
+      {tabindex: '0'},
+      testId('btn-only-checkbox-items'),
+      menu(() => [
+        testId('only-checkbox-items-menu'),
+        makeCheckboxItem('Checkbox 1'),
+        makeCheckboxItem('Checkbox 2'),
+        makeCheckboxItem('Checkbox 3'),
+      ]),
+    ),
     makeSelect(),
     makeComplexSelect(),
     cssInputContainer(
@@ -137,6 +147,7 @@ function makeMenu(ctl: IOpenController): DomElementArg[] {
       placement: 'right',
     }), "popup", testId('popup-open')
     ),
+    makeCheckboxItem('Checkbox test'),
     cssMenuDivider(),
     menuItemSubmenu(makePasteSubmenu, {
       expandIcon: () => dom('div', '->'),
@@ -249,6 +260,26 @@ function makeComplexAutocomplete(): HTMLInputElement {
       return content.find((el: any) => el.textContent.startsWith(val)) || null;
     }
   });
+}
+
+function makeCheckboxItem(label: string) {
+  const checkboxObs = observable(false);
+  return menuItem(() => {
+    checkboxObs.set(!checkboxObs.get());
+    lastAction.set(`${label} toggle: ${checkboxObs.get()}`);
+  }, [
+    {role: 'menuitemcheckbox'},
+    dom('label',
+      dom('span', label),
+      dom('span', dom('input',
+        {
+          type: 'checkbox',
+          value: 'test',
+        },
+        dom.prop("checked", checkboxObs),
+      ))
+    ),
+  ]);
 }
 
 function buildPopupContent(ctl: IOpenController): HTMLElement {
