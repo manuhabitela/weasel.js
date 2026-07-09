@@ -167,6 +167,7 @@ class Select<T> extends BaseMenu {
 
     // On keydown, search for the first element with a matching label.
     onElem(this._menuContent, 'keydown', (ev) => {
+      if (ev.getModifierState('Control') || ev.getModifierState('Alt') || ev.getModifierState('Meta')) { return; }
       const sel = this._keyState.add(ev.key);
       if (sel) { this._selectRow(sel.label); }
     });
