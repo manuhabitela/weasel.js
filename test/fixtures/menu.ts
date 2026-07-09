@@ -79,6 +79,16 @@ function setupTest() {
         makeCheckboxItem('Checkbox 3'),
       ]),
     ),
+    cssButton('My Menu with only disabled items',
+      {tabindex: '0'},
+      testId('btn-only-disabled-items'),
+      menu(() => [
+        testId('only-disabled-items-menu'),
+        menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
+        menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
+        menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
+      ]),
+    ),
     makeSelect(),
     makeComplexSelect(),
     cssInputContainer(

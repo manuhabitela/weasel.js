@@ -321,6 +321,22 @@ describe('menu', () => {
     assert.equal(await driver.find('.test-input1').getAttribute('value'), 'helloa');
   });
 
+  function findSelected() {
+    return driver.findAll('li[class*=-sel]', (e) => e.getText());
+  }
+
+  it('should not hang when navigating a menu of only disabled items', async function() {
+    await driver.find('.test-btn-only-disabled-items').click();
+    await assertOpen('.test-only-disabled-items-menu', true);
+    // Nothing should be selected; arrow keys must not loop forever.
+    await driver.sendKeys(Key.DOWN);
+    assert.deepEqual(await findSelected(), []);
+    await driver.sendKeys(Key.UP);
+    assert.deepEqual(await findSelected(), []);
+    await driver.sendKeys(Key.ESCAPE);
+    await assertOpen('.test-only-disabled-items-menu', false);
+  });
+
   it('should allow nothing selected with navigating navigation', async function() {
     await driver.find('.test-btn5').click();
     await assertOpen('.test-menu1', true);
@@ -346,11 +362,6 @@ describe('menu', () => {
     await assertOpen('.test-menu1', true);
     await driver.sendKeys(Key.ESCAPE);
     await assertOpen('.test-menu1', false);
-
-    function findSelected() {
-      return driver.findAll('li[class*=-sel]', (e) => e.getText());
-    }
-
   });
 
   it('should support the modifyContent argument to customize the dropdown element', async function() {

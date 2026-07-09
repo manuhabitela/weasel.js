@@ -310,6 +310,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
   }
 
   protected nextIndex(): void {
+    if (!this._hasSelectables()) { return; }
     const next = this._getNextSelectable(
       this._selected, (elem) => elem.nextElementSibling, this._menuContent.firstElementChild
     );
@@ -317,6 +318,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
   }
 
   protected prevIndex(): void {
+    if (!this._hasSelectables()) { return; }
     const next = this._getNextSelectable(
       this._selected, (elem) => elem.previousElementSibling, this._menuContent.lastElementChild
     );
@@ -367,6 +369,10 @@ export class BaseMenu extends Disposable implements IPopupContent {
     // Find immediate child of this._menuContent which is an ancestor of ev.target.
     const elem = findAncestorChild(this._menuContent, ev.target as Element);
     return elem && isSelectable(elem) ? elem : null;
+  }
+
+  private _hasSelectables() {
+    return Array.from(this._menuContent.children).some(child => isSelectable(child));
   }
 
   /**
