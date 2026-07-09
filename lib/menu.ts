@@ -4,7 +4,11 @@
  *
  * The standard menu item offers enough flexibility to suffice for many needs, and may be replaced
  * entirely by a custom item. For an item to be a selectable menu item, it needs `tabindex=-1`
- * attribute set. If unset, or if the "disabled" class is set, the item will not be selectable.
+ * attribute set. If unset, or if "aria-disabled" is set to "true", or if the "disabled" class is set[*],
+ * the item will not be selectable.
+ *
+ * [*] Note that using "aria-disabled" is preferred over the "disabled" class for better compatibility
+ * with assistive technologies.
  *
  * Further, if `dom.dataElem(elem, 'menuItemSelected', (yesNo: boolean, elem) => {})` is set, that
  * callback will be called whenever the item is selected and unselected. In addition, the selected
@@ -127,8 +131,8 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
 /**
  * Implements a single menu item.
  *
- * The item is generated with tabindex="-1". To generate a menu item that is not selectable, add the "disabled" class
- * to the additional args.
+ * The item is generated with tabindex="-1". To generate a menu item that is not selectable,
+ * set its "aria-disabled" attribute to "true" with additional args.
  *
  * The appearance of the menuItem components can be changed by setting the followingcss variables
  * in the parent project:
@@ -141,7 +145,7 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
     ...args,
     dom.on('click', (ev, elem) => {
       const item = findMenuItem(elem);
-      if (item?.classList.contains('disabled')) {
+      if (item?.classList.contains('disabled') || item?.getAttribute('aria-disabled') === 'true') {
         return;
       }
       const isCheckbox = item?.getAttribute('role') === 'menuitemcheckbox'
@@ -444,7 +448,8 @@ function isMenuContainer(elem: Element|null) {
  */
 function isSelectable(elem: Element): elem is HTMLElement {
   // Offset height > 0 is used to determine if the element is visible.
-  return elem.hasAttribute('tabIndex') && !elem.classList.contains('disabled') &&
+  return elem.hasAttribute('tabIndex') &&
+    !(elem.classList.contains('disabled') || elem.getAttribute('aria-disabled') === 'true') &&
     (elem as HTMLElement).offsetHeight > 0;
 }
 
@@ -540,7 +545,9 @@ export function menuItemSubmenu(
 
     // Clicks that open a submenu should not cause parent menu to close.
     dom.on('click', (ev, elem) => {
-      if (options.action && !elem.classList.contains('disabled')) {
+      if (options.action &&
+        !(elem.classList.contains('disabled') || elem.getAttribute('aria-disabled') === 'true')
+      ) {
         options.action(elem, ev);
       } else {
         ev.stopPropagation();
@@ -586,7 +593,7 @@ export const cssMenuItem = styled('li', `
     background-color: var(--weaseljs-selected-background-color, #5AC09C);
     color:            var(--weaseljs-selected-color, white);
   }
-  &.disabled {
+  &.disabled, &[aria-disabled="true"] {
     color: grey;
   }
 `);

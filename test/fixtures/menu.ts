@@ -85,7 +85,7 @@ function setupTest() {
       menu(() => [
         testId('only-disabled-items-menu'),
         menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
-        menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
+        menuItem(() => {}, 'Disabled stuff', dom.attr('aria-disabled', 'true')),
         menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
       ]),
     ),
