@@ -220,7 +220,7 @@ export function updateListAria(
   }
   triggerElem.setAttribute('aria-controls', listId);
   triggerElem.setAttribute('aria-owns', listId);
-  if (options.role === 'menu' && triggerElem.id) {
+  if (options.role === 'menu' && triggerElem.id && !listElem.getAttribute('aria-labelledby')) {
     listElem.setAttribute('aria-labelledby', triggerElem.id);
   }
   menu.onDispose(() => {
