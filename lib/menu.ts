@@ -409,7 +409,7 @@ export class Menu extends BaseMenu implements IPopupContent {
     super(ctl, items, options);
     for (const child of this._menuContent.children) {
       const existingRole = child.getAttribute('role');
-      if (!existingRole || !['menuitem', 'menuitemcheckbox'].includes(existingRole)) {
+      if (!existingRole) {
         child.setAttribute('role', 'menuitem');
       }
     }
