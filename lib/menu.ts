@@ -168,6 +168,7 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
       // Space key is used to toggle a checkbox item without closing the parent menu.
       " $": (ev, elem) => {
         if (elem.getAttribute('role') === 'menuitemcheckbox') {
+          ev.preventDefault();
           action(elem, ev);
         }
       }
