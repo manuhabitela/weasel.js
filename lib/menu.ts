@@ -289,9 +289,8 @@ export class BaseMenu extends Disposable implements IPopupContent {
         onKeyDown({
           ArrowDown: () => this.nextIndex(),
           ArrowUp: () => this.prevIndex(),
-          ...options.isSubMenu ? {
-            ArrowLeft: () => ctl.close(0),
-          } : {},
+          ArrowLeft: options.isSubMenu ? () => ctl.close(0) : () => {},
+          ArrowRight: () => {}
         }),
         (el) => options.modifyContent?.(el, ctl)
       ),
