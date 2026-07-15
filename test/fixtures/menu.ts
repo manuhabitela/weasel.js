@@ -3,7 +3,7 @@
  */
 // tslint:disable:no-console
 import {dom, DomElementArg, input, makeTestId, obsArray, observable, styled, TestId} from 'grainjs';
-import {cssMenuDivider, menu, menuItem, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
+import {cssMenuDivider, menu, menuGroup, menuItem, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
 import {IOpenController, PopupControl} from '../../index';
 import {autocomplete, inputMenu, select} from '../../index';
 
@@ -87,6 +87,23 @@ function setupTest() {
         menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
         menuItem(() => {}, 'Disabled stuff', dom.attr('aria-disabled', 'true')),
         menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
+      ]),
+    ),
+    cssButton('My Menu with grouped items',
+      {tabindex: '0'},
+      testId('btn-only-disabled-items'),
+      menu(() => [
+        testId('only-disabled-items-menu'),
+        menuGroup('Grouped items header',
+          menuItem(() => {}, 'Grouped item 1'),
+          menuItem(() => {}, 'Grouped item 2'),
+          menuItem(() => {}, 'Grouped item 3'),
+        ),
+        menuGroup('Grouped items header 2',
+          menuItem(() => {}, 'Grouped item 1'),
+          menuItem(() => {}, 'Grouped item 2', dom.attr('aria-disabled', 'true')),
+          menuItem(() => {}, 'Grouped item 3'),
+        ),
       ]),
     ),
     makeSelect(),

@@ -4,7 +4,8 @@
  *
  * The standard menu item offers enough flexibility to suffice for many needs, and may be replaced
  * entirely by a custom item. For an item to be a selectable menu item, it needs `tabindex=-1`
- * attribute set. If unset, or if "aria-disabled" is set to "true", or if the "disabled" class is set[*],
+ * attribute set, and a role of either "menuitem", "menuitemcheckbox", or "option" (for selects).
+ * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[*],
  * the item will not be selectable.
  *
  * [*] Note that using "aria-disabled" is preferred over the "disabled" class for better compatibility
@@ -142,6 +143,7 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
  */
 export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args: DomElementArg[]): Element {
   return cssMenuItem(
+    {role: 'menuitem'},
     ...args,
     dom.on('click', (ev, elem) => {
       const item = findMenuItem(elem);
@@ -176,11 +178,23 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
   );
 }
 
+export function menuGroup(heading: DomElementArg, ...args: DomElementArg[]): Element {
+  const headingId = uniqueId(weaselIdPrefix);
+  return cssMenuGroup(
+    {
+      role: 'group',
+      'aria-labelledby': headingId,
+    },
+    dom('div', {id: headingId, role: 'presentation'}, heading),
+    ...args
+  );
+}
+
 /**
  * A version of menuItem that's an <a> link element.
  */
 export function menuItemLink(...args: DomElementArg[]): Element {
-  return cssMenuItemLink({tabindex: '-1'}, cssMenuItem.cls(''), ...args,
+  return cssMenuItemLink({tabindex: '-1', role: 'menuitem'}, cssMenuItem.cls(''), ...args,
     // This prevents propagation, but NOT the default action, which is to open the link.
     onKeyDown({Enter$: (ev) => ev.stopPropagation()})
   );
@@ -315,19 +329,27 @@ export class BaseMenu extends Disposable implements IPopupContent {
   }
 
   protected nextIndex(): void {
-    if (!this._hasSelectables()) { return; }
+    const selectables = this._getSelectables();
+    if (!selectables.length) { return; }
     const next = this._getNextSelectable(
-      this._selected, (elem) => elem.nextElementSibling, this._menuContent.firstElementChild
+      this._selected, (elem) => this._findSibling(elem, selectables, 'next'), selectables[0]
     );
     this.setSelected(next);
   }
 
   protected prevIndex(): void {
-    if (!this._hasSelectables()) { return; }
+    const selectables = this._getSelectables();
+    if (!selectables.length) { return; }
     const next = this._getNextSelectable(
-      this._selected, (elem) => elem.previousElementSibling, this._menuContent.lastElementChild
+      this._selected, (elem) => this._findSibling(elem, selectables, 'prev'), selectables[selectables.length - 1]
     );
     this.setSelected(next);
+  }
+
+  private _findSibling(elem: Element | null, selectables: Element[], direction: 'next' | 'prev'): Element | null {
+    if (!elem) { return null; }
+    const index = selectables.indexOf(elem);
+    return selectables[index + (direction === 'next' ? 1 : -1)];
   }
 
   // When the selected element changes, update the classes of the formerly and newly-selected
@@ -376,8 +398,13 @@ export class BaseMenu extends Disposable implements IPopupContent {
     return elem && isSelectable(elem) ? elem : null;
   }
 
-  private _hasSelectables() {
-    return Array.from(this._menuContent.children).some(child => isSelectable(child));
+  private _getSelectables() {
+    const selectables = this._menuContent.querySelectorAll(
+      ':is([role="menuitem"], [role="menuitemcheckbox"], [role="option"]):not([aria-disabled="true"], .disabled)'
+    );
+    return Array.from(selectables).filter(child =>
+      (child as HTMLElement).offsetHeight > 0
+    );
   }
 
   /**
@@ -408,12 +435,6 @@ export class BaseMenu extends Disposable implements IPopupContent {
 export class Menu extends BaseMenu implements IPopupContent {
   constructor(ctl: IOpenController, items: DomElementArg[], options: IMenuOptions = {}) {
     super(ctl, items, options);
-    for (const child of this._menuContent.children) {
-      const existingRole = child.getAttribute('role');
-      if (!existingRole) {
-        child.setAttribute('role', 'menuitem');
-      }
-    }
     updateListAria(this, ctl.getTriggerElem(), this._menuContent, {role: 'menu'});
 
     setTimeout(() =>
@@ -528,6 +549,8 @@ export function menuItemSubmenu(
     options.expandIcon ? options.expandIcon() : cssExpandIcon(),
     dom.autoDispose(ctl),
 
+    {role: 'menuitem'},
+
     // Set the submenu to be attached as a child of this element rather than as a sibling.
     menu(submenu, popupOptions),
 
@@ -598,6 +621,13 @@ export const cssMenuItem = styled('li', `
     color: grey;
   }
 `);
+
+export const cssMenuGroup = styled('div', `
+  & [role="presentation"] {
+    text-transform: var(--weaseljs-menu-group-text-transform, uppercase);
+    padding: var(--weaseljs-menu-item-padding, 8px 24px);
+  }
+`)
 
 export const cssMenuItemLink = styled('a', `
   display: flex;
