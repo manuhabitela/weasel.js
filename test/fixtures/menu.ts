@@ -298,6 +298,7 @@ function makeCheckboxItem(label: string, ...args: DomElementArg[]) {
     lastAction.set(`${label} toggle: ${checkboxObs.get()}`);
   }, [
     {role: 'menuitemcheckbox'},
+    dom.attr("aria-checked", use => use(checkboxObs) ? "true" : "false"),
     dom('label',
       dom('span', label),
       dom('span', dom('input',

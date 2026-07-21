@@ -4,11 +4,15 @@
  *
  * The standard menu item offers enough flexibility to suffice for many needs, and may be replaced
  * entirely by a custom item. For an item to be a selectable menu item, it needs `tabindex=-1`
- * attribute set, and a role of either "menuitem", "menuitemcheckbox", or "option" (for selects).
- * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[*],
+ * attribute set, and a role of either "menuitem", "menuitemcheckbox"[1], or "option" (for selects).
+ * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[2],
  * the item will not be selectable.
  *
- * [*] Note that using "aria-disabled" is preferred over the "disabled" class for better compatibility
+ * [1] state for checkbox items is not handled by weasel. When marking an item as menuitemcheckbox,
+ * you must also set an "aria-checked" attribute to "true" or "false" that correctly reflects the state.
+ * Otherwise, people using tools like screen readers won't know the item's state!
+ *
+ * [2] Note that using "aria-disabled" is preferred over the "disabled" class for better compatibility
  * with assistive technologies.
  *
  * Further, if `dom.dataElem(elem, 'menuItemSelected', (yesNo: boolean, elem) => {})` is set, that
