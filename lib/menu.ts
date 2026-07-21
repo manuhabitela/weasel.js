@@ -548,7 +548,7 @@ export function menuItemSubmenu(
     options.expandIcon ? options.expandIcon() : cssExpandIcon(),
     dom.autoDispose(ctl),
 
-    {role: 'menuitem'},
+    {'role': 'menuitem', 'aria-expanded': 'false'},
 
     // Set the submenu to be attached as a child of this element rather than as a sibling.
     menu(submenu, popupOptions),
