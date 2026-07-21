@@ -230,9 +230,14 @@ describe('menu', () => {
     await driver.sendKeys(Key.UP);
     assert.equal(await driver.find('.test-sub-item-checkbox').hasFocus(), true);
 
-    // ESCAPE should close both menus.
+    // ESCAPE should close only the submenu; parent stays open.
     await driver.sendKeys(Key.ESCAPE);
     await assertOpen('.test-submenu1', false);
+    await assertOpen('.test-menu1', true);
+    assert.equal(await driver.find('.test-sub-item').hasFocus(), true);
+
+    // ESCAPE again should close the parent menu.
+    await driver.sendKeys(Key.ESCAPE);
     await assertOpen('.test-menu1', false);
     // No actions were performed.
     assert.equal(await driver.find('.test-last').getText(), '');
