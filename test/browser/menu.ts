@@ -228,7 +228,7 @@ describe('menu', () => {
     await driver.sendKeys(Key.UP);
     assert.equal(await driver.find('.test-sub-item2').hasFocus(), true);
     await driver.sendKeys(Key.UP);
-    assert.equal(await driver.find('.test-paste2').hasFocus(), true);
+    assert.equal(await driver.find('.test-sub-item-checkbox').hasFocus(), true);
 
     // ESCAPE should close both menus.
     await driver.sendKeys(Key.ESCAPE);
@@ -251,6 +251,31 @@ describe('menu', () => {
     await assertOpen('.test-menu1', true);
     await driver.sendKeys(Key.ESCAPE);
     await assertOpen('.test-menu1', false);
+  });
+
+  it('should close submenu inside a group when another item is selected', async function() {
+    await driver.find('.test-btn-grouped-items').mouseMove().click();
+    await assertOpen('.test-grouped-items-menu', true);
+
+    // Mouse over a submenu item nested inside a menuGroup.
+    await driver.find('.test-grouped-sub-item').mouseMove();
+    await driver.findWait('.test-submenu1', 1000);
+    await assertOpen('.test-submenu1', true);
+
+    // Mouse over a sibling item in the same group — submenu should close.
+    await driver.find('.test-grouped-item1').mouseMove();
+    await assertOpen('.test-submenu1', false);
+    await assertOpen('.test-grouped-items-menu', true);
+
+    // Re-open, then hover an ungrouped sibling — submenu should close.
+    await driver.find('.test-grouped-sub-item').mouseMove();
+    await driver.findWait('.test-submenu1', 1000);
+    await assertOpen('.test-submenu1', true);
+    await driver.find('.test-ungrouped-item').mouseMove();
+    await assertOpen('.test-submenu1', false);
+
+    await driver.sendKeys(Key.ESCAPE);
+    await assertOpen('.test-grouped-items-menu', false);
   });
 
   it('should support setOpenClass() while a menu is open', async function() {

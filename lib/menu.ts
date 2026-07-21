@@ -378,8 +378,9 @@ export class BaseMenu extends Disposable implements IPopupContent {
 
   private _onMouseOver(ev: MouseEvent) {
     if (!isMenuContainer(ev.target as Element)) {
-      const elem = this._findTargetItem(ev);
-      this.setSelected(elem);     // If elem is null, intentionally deselect.
+      // If we don't find an item or it's not selectable, intentionally deselect.
+      const elem = findMenuItem(ev.target as Element);
+      this.setSelected(elem && isSelectable(elem) ? elem : null);
     }
   }
 
@@ -389,12 +390,6 @@ export class BaseMenu extends Disposable implements IPopupContent {
       // Don't deselect if there is an open submenu.
       this.setSelected(null);
     }
-  }
-
-  private _findTargetItem(ev: MouseEvent): HTMLElement|null {
-    // Find immediate child of this._menuContent which is an ancestor of ev.target.
-    const elem = findAncestorChild(this._menuContent, ev.target as Element);
-    return elem && isSelectable(elem) ? elem : null;
   }
 
   private _getSelectables() {
@@ -474,29 +469,21 @@ function isSelectable(elem: Element): elem is HTMLElement {
     (elem as HTMLElement).offsetHeight > 0;
 }
 
+/**
+ * Finds the menu item (role menuitem / menuitemcheckbox / option) that contains elem,
+ * within its nearest menu. Items may be nested inside groups, so this is not necessarily
+ * a direct child of the menu container.
+ */
 function findMenuItem(elem: Element) {
-  return findAncestorChild(elem.closest('.' + cssMenu.className)!, elem);
+  return elem.closest(`.${cssMenu.className} :is([role="menuitem"], [role="menuitemcheckbox"], [role="option"])`);
 }
 
 /**
  * Whether the given element is part of a selectable item. A click on it will close menus.
  */
 function isInSelectableItem(elem: Element): boolean {
-  // Similar to _findTargetItem, but finds the menu item (direct child of cssMenu) containing
-  // elem, regardless of which menu or submenu it's in, and returns whether it's selectable.
   const item = findMenuItem(elem);
   return item ? isSelectable(item) : false;
-}
-
-/**
- * Helper function which returns the direct child of ancestor which is an ancestor of elem, or
- * null if elem is not a descendant of ancestor.
- */
-function findAncestorChild(ancestor: Element, elem: Element|null): Element|null {
-  while (elem && elem.parentElement !== ancestor) {
-    elem = elem.parentElement;
-  }
-  return elem;
 }
 
 /**

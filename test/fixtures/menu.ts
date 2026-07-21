@@ -91,18 +91,19 @@ function setupTest() {
     ),
     cssButton('My Menu with grouped items',
       {tabindex: '0'},
-      testId('btn-only-disabled-items'),
+      testId('btn-grouped-items'),
       menu(() => [
-        testId('only-disabled-items-menu'),
+        testId('grouped-items-menu'),
+        menuItem(() => lastAction.set('Ungrouped item click'), 'Ungrouped item', testId('ungrouped-item')),
         menuGroup('Grouped items header',
-          menuItem(() => {}, 'Grouped item 1'),
-          menuItem(() => {}, 'Grouped item 2'),
-          menuItem(() => {}, 'Grouped item 3'),
+          menuItem(() => lastAction.set('Grouped item click 1'), 'Grouped item 1', testId('grouped-item1')),
+          menuItem(() => lastAction.set('Grouped item click 2'), 'Grouped item 2', testId('grouped-item2')),
+          menuItemSubmenu(makePasteSubmenu, {}, 'Grouped submenu', testId('grouped-sub-item')),
         ),
         menuGroup('Grouped items header 2',
-          menuItem(() => {}, 'Grouped item 1'),
+          menuItem(() => lastAction.set('Grouped item click 2.1'), 'Grouped item 1'),
           menuItem(() => {}, 'Grouped item 2', dom.attr('aria-disabled', 'true')),
-          menuItem(() => {}, 'Grouped item 3'),
+          menuItem(() => lastAction.set('Grouped item click 2.3'), 'Grouped item 3'),
         ),
       ]),
     ),
@@ -192,6 +193,7 @@ function makePasteSubmenu(): DomElementArg[] {
     menuItem(() => lastAction.set('Cut2'), "Cut2", testId('cut2')),
     menuItem(() => lastAction.set('Copy2'), "Copy2", testId('copy2')),
     menuItem(() => lastAction.set('Paste2'), "Paste2", testId('paste2')),
+    makeCheckboxItem('Checkbox test', testId('sub-item-checkbox')),
     menuItemSubmenu(makePasteSubmenu, {}, "Paste Special2", testId('sub-item2')),
     menuItemSubmenu(makePasteSubmenu, {}, "Paste Special2 with really long text", testId('sub-item2b')),
   ];
@@ -289,7 +291,7 @@ function makeComplexAutocomplete(): HTMLInputElement {
   });
 }
 
-function makeCheckboxItem(label: string) {
+function makeCheckboxItem(label: string, ...args: DomElementArg[]) {
   const checkboxObs = observable(false);
   return menuItem(() => {
     checkboxObs.set(!checkboxObs.get());
@@ -306,6 +308,7 @@ function makeCheckboxItem(label: string) {
         dom.prop("checked", checkboxObs),
       ))
     ),
+    ...args,
   ]);
 }
 
@@ -408,6 +411,7 @@ const cssInput = styled(input, `
 
 const cssInputMenu = styled('div', `
   min-width: 100%;
+  z-index: 9999;
 `);
 
 const funkyOptions = {
