@@ -211,6 +211,29 @@ export const menuItemCheckbox = (checked: Observable<boolean>, ...args: DomEleme
 }
 
 /**
+ * A version of menuItem that's an <a> link element.
+ */
+export function menuItemLink(...args: DomElementArg[]): Element {
+  const preventActionIfDisabled = (ev: Event, item: HTMLElement) => {
+    if (isDisabled(item)) {
+      ev.preventDefault();
+      return;
+    }
+  }
+  return cssMenuItemLink(
+    {tabindex: '-1', role: 'menuitem'},
+    cssMenuItem.cls(''),
+    ...args,
+    dom.on('click', preventActionIfDisabled),
+    // This prevents propagation, but NOT the default action, which is to open the link.
+    onKeyDown({Enter$: (ev, item) => {
+      ev.stopPropagation();
+      return preventActionIfDisabled(ev, item);
+    }})
+  );
+}
+
+/**
  * A group of menu items with a visible heading, that is correctly announced
  * by screen readers.
  *
@@ -236,29 +259,6 @@ export function menuGroup(heading: DomElementArg, ...args: DomElementArg[]): Ele
     },
     dom('div', {id: headingId, role: 'presentation'}, heading),
     ...args
-  );
-}
-
-/**
- * A version of menuItem that's an <a> link element.
- */
-export function menuItemLink(...args: DomElementArg[]): Element {
-  const preventActionIfDisabled = (ev: Event, item: HTMLElement) => {
-    if (isDisabled(item)) {
-      ev.preventDefault();
-      return;
-    }
-  }
-  return cssMenuItemLink(
-    {tabindex: '-1', role: 'menuitem'},
-    cssMenuItem.cls(''),
-    ...args,
-    dom.on('click', preventActionIfDisabled),
-    // This prevents propagation, but NOT the default action, which is to open the link.
-    onKeyDown({Enter$: (ev, item) => {
-      ev.stopPropagation();
-      return preventActionIfDisabled(ev, item);
-    }})
   );
 }
 
