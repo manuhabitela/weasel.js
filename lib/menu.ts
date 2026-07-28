@@ -250,8 +250,9 @@ export function updateListAria(
   listElem: HTMLElement,
   options: { role: 'menu' | 'listbox' },
 ) {
-  const listId = uniqueId(weaselIdPrefix);
-  listElem.id = listId;
+  if (!listElem.id) {
+    listElem.id = uniqueId(weaselIdPrefix);
+  }
   listElem.setAttribute('role', options.role);
   if (options.role === 'listbox') {
     listElem.setAttribute('aria-orientation', 'vertical');
@@ -261,8 +262,8 @@ export function updateListAria(
   if (triggerElem.hasAttribute('aria-expanded')) {
     triggerElem.setAttribute('aria-expanded', 'true');
   }
-  triggerElem.setAttribute('aria-controls', listId);
-  triggerElem.setAttribute('aria-owns', listId);
+  triggerElem.setAttribute('aria-controls', listElem.id);
+  triggerElem.setAttribute('aria-owns', listElem.id);
   if (options.role === 'menu' && triggerElem.id && !listElem.getAttribute('aria-labelledby')) {
     listElem.setAttribute('aria-labelledby', triggerElem.id);
   }
