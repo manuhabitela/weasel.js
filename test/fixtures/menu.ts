@@ -3,7 +3,7 @@
  */
 // tslint:disable:no-console
 import {dom, DomElementArg, input, makeTestId, obsArray, observable, styled, TestId} from 'grainjs';
-import {cssMenuDivider, menu, menuGroup, menuItem, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
+import {cssMenuDivider, menu, menuGroup, menuItem, menuItemCheckbox, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
 import {IOpenController, PopupControl} from '../../index';
 import {autocomplete, inputMenu, select} from '../../index';
 
@@ -38,7 +38,7 @@ function setupTest() {
     // tabindex makes it focusable, allowing us to test focus restore issues.
     cssButton('My Menu',
       testId('btn1'),
-      { tabindex: "0" },
+      { tabindex: "0", role: "button" },
       menu(makeMenu, {
         parentSelectorToMark: '.' + cssExample.className,
         trigger: ['click', {keys: ['Enter']}],
@@ -46,7 +46,7 @@ function setupTest() {
     ),
     cssButton('My Contextmenu',
       testId('btn2'),
-      { tabindex: "-1" },
+      { tabindex: "-1", role: "button" },
       menu(makeMenu, {
         trigger: ['contextmenu'],
         parentSelectorToMark: '.' + cssExample.className
@@ -75,7 +75,7 @@ function setupTest() {
       menu(() => [
         testId('only-checkbox-items-menu'),
         makeCheckboxItem('Checkbox 1'),
-        makeCheckboxItem('Checkbox 2'),
+        makeCheckboxItem('Checkbox 2', {"aria-disabled": "true"}),
         makeCheckboxItem('Checkbox 3'),
       ]),
     ),
@@ -101,9 +101,11 @@ function setupTest() {
           menuItemSubmenu(makePasteSubmenu, {}, 'Grouped submenu', testId('grouped-sub-item')),
         ),
         menuGroup('Grouped items header 2',
-          menuItem(() => lastAction.set('Grouped item click 2.1'), 'Grouped item 1'),
-          menuItem(() => {}, 'Grouped item 2', dom.attr('aria-disabled', 'true')),
-          menuItem(() => lastAction.set('Grouped item click 2.3'), 'Grouped item 3'),
+          menuItem(() => lastAction.set('Grouped item click 2.1'), 'Grouped item 2.1'),
+          menuItemLink({href: 'https://getgrist.com'}, 'Grouped item link 2.2', {"aria-disabled": "true"}),
+          makeCheckboxItem('Grouped checkbox 2.3'),
+          menuItem(() => {}, 'Grouped item 2.4', dom.attr('aria-disabled', 'true')),
+          menuItem(() => lastAction.set('Grouped item click 2.5'), 'Grouped item 2.5'),
         ),
       ]),
     ),
@@ -293,12 +295,9 @@ function makeComplexAutocomplete(): HTMLInputElement {
 
 function makeCheckboxItem(label: string, ...args: DomElementArg[]) {
   const checkboxObs = observable(false);
-  return menuItem(() => {
-    checkboxObs.set(!checkboxObs.get());
-    lastAction.set(`${label} toggle: ${checkboxObs.get()}`);
-  }, [
-    {role: 'menuitemcheckbox'},
-    dom.attr("aria-checked", use => use(checkboxObs) ? "true" : "false"),
+  return menuItemCheckbox(checkboxObs,
+    // Note: a label is not required at all semantically since we are in a menu,
+    // but we want to test behavior when a label is used.
     dom('label',
       dom('span', label),
       dom('span', dom('input',
@@ -310,7 +309,7 @@ function makeCheckboxItem(label: string, ...args: DomElementArg[]) {
       ))
     ),
     ...args,
-  ]);
+  );
 }
 
 function buildPopupContent(ctl: IOpenController): HTMLElement {
@@ -424,7 +423,7 @@ const cssPopupContent = styled('div', `
 `);
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.body.appendChild(setupTest());
+  document.querySelector('main')!.appendChild(setupTest());
 });
 
 const cssOverride = styled('div', `

@@ -8,11 +8,10 @@
  * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[2],
  * the item will not be selectable.
  *
- * [1] state for checkbox items is not handled by weasel. When marking an item as menuitemcheckbox,
- * you must also set an "aria-checked" attribute to "true" or "false" that correctly reflects the state.
- * Otherwise, people using tools like screen readers won't know the item's state!
+ * [1] you should use the `menuItemCheckbox` helper to build checkbox menu items to make sure they are
+ * compatible with assistive technologies.
  *
- * [2] Note that using "aria-disabled" is preferred over the "disabled" class for better compatibility
+ * [2] Note that using "aria-disabled" is preferred over the "disabled" class for compatibility
  * with assistive technologies.
  *
  * Further, if `dom.dataElem(elem, 'menuItemSelected', (yesNo: boolean, elem) => {})` is set, that
@@ -22,7 +21,7 @@
  * Clicks on items will normally propagate to the menu, where they get caught and close the menu.
  * If a click on an item should not close the menu, the item should stop the click's propagation.
  */
-import {dom, domDispose, DomElementArg, DomElementMethod, DomMethod, EventCB, styled} from 'grainjs';
+import {dom, domDispose, DomElementArg, DomElementMethod, DomMethod, EventCB, Observable, styled} from 'grainjs';
 import {Disposable, onKeyDown, onKeyElem} from 'grainjs';
 import defaultsDeep = require('lodash/defaultsDeep');
 import mergeWith = require('lodash/mergeWith');
@@ -151,37 +150,61 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
  *    --weaseljs-menu-item-padding
  */
 export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args: DomElementArg[]): Element {
+  const triggerAction = (ev: Event, item: HTMLElement) => {
+    if (isDisabled(item)) {
+      ev.preventDefault();
+    } else {
+      action(item, ev);
+    }
+  }
   return cssMenuItem(
     {role: 'menuitem'},
     ...args,
-    dom.on('click', (ev, elem) => {
-      const item = findMenuItem(elem);
-      if (item?.classList.contains('disabled') || item?.getAttribute('aria-disabled') === 'true') {
-        return;
-      }
-      const isCheckbox = item?.getAttribute('role') === 'menuitemcheckbox'
-        && (ev.target as HTMLElement).tagName.toLowerCase() === 'input'
-        && (ev.target as HTMLInputElement).type === 'checkbox';
-      // If we click a checkbox inside a menuitemcheckbox, we assume we want the checkbox to be visually toggled, so
-      // we let default behavior occur. Without this exception, clicking the checkbox itself would not update its UI.
-      // Otherwise, make sure to prevent default element action to avoid issues (e.g. clicking a label triggers
-      // a click on the tied input, and we don't want that).
-      if (!isCheckbox) {
-        ev.preventDefault();
-      }
-      action(elem, ev);
-    }),
+    dom.on('click', triggerAction),
+    // `tabindex="-1"` is automatically added by the onKeyDown helper, making the item selectable by default.
+    onKeyDown({ "Enter$": triggerAction })
+  );
+}
+
+/**
+ * A toggleable menu item.
+ *
+ * This makes sure screen readers correctly announce the menu item as checked/unchecked.
+ * You are expected to provide your own UI that reflects the observable as the item content.
+ * A classic checkbox input element tied to the observable can be used.
+ *
+ * The item is generated with tabindex="-1". To generate a menu item that is not selectable,
+ * set its "aria-disabled" attribute to "true" through the additional args.
+ */
+export const menuItemCheckbox = (checked: Observable<boolean>, ...args: DomElementArg[]) => {
+  const toggle = (ev: Event, item: HTMLElement) => {
+    if (isDisabled(item)) {
+      ev.preventDefault();
+      return;
+    }
+    // UI provided has chances to be a classic label+input pair. In that case, we prevent default's browser behavior
+    // if we click the label.
+    // Without this, browser triggers a programmatic click event on the input when clicking the label. Our click
+    // listener would be triggered twice, once for the label, once for the input, resulting in the `checked`
+    // observable being toggled twice with one actual user click.
+    if (ev.target instanceof HTMLElement && ev.target.closest('label') !== null && ev.target.tagName !== 'INPUT') {
+      ev.preventDefault();
+    }
+    checked.set(!checked.get());
+  }
+  return cssMenuItem(
+    {role: 'menuitemcheckbox'},
+    dom.attr("aria-checked", use => use(checked) ? "true" : "false"),
+    ...args,
+    dom.on('click', toggle),
     // `tabindex="-1"` is automatically added by the onKeyDown helper, making the item selectable by default.
     onKeyDown({
-      "Enter$": (ev, elem) => {
-        action(elem, ev)
-      },
+      "Enter$": toggle,
       // Space key is used to toggle a checkbox item without closing the parent menu.
-      " $": (ev, elem) => {
-        if (elem.getAttribute('role') === 'menuitemcheckbox') {
+      " $": (ev, item) => {
+          // We always prevent default here to prevent browser from scrolling.
           ev.preventDefault();
-          action(elem, ev);
-        }
+          toggle(ev, item);
       }
     })
   );
