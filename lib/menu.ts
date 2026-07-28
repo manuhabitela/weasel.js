@@ -263,6 +263,8 @@ export function updateListAria(
     triggerElem.setAttribute('aria-expanded', 'true');
   }
   triggerElem.setAttribute('aria-controls', listElem.id);
+  // Without aria-owns, some screen readers announce unnecessary and verbose context change when closing the menu,
+  // because the menu's list is a direct child of the body element and not a child or sibling of the trigger element.
   triggerElem.setAttribute('aria-owns', listElem.id);
   if (options.role === 'menu' && triggerElem.id && !listElem.getAttribute('aria-labelledby')) {
     listElem.setAttribute('aria-labelledby', triggerElem.id);
