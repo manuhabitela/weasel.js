@@ -365,9 +365,10 @@ export class BaseMenu extends Disposable implements IPopupContent {
       ),
       // Events set on the parent of _menuContent receive events bubbled up from submenus.
       dom.on('click', (ev) => {
-        if (isInSelectableItem(ev.target as Element)) {
+        const item = findMenuItem(ev.target as Element);
+        if (item && isSelectable(item)) {
           // Items might be checkboxes, in that case we don't want to close the menu on click
-          if (findMenuItem(ev.target as Element)?.getAttribute('role') !== 'menuitemcheckbox') {
+          if (item.getAttribute('role') !== 'menuitemcheckbox') {
             ctl.close(0);
           }
         } else {
@@ -548,14 +549,6 @@ function isDisabled(elem: Element): boolean {
  */
 function findMenuItem(elem: Element) {
   return elem.closest(`.${cssMenu.className} :is([role="menuitem"], [role="menuitemcheckbox"], [role="option"])`);
-}
-
-/**
- * Whether the given element is part of a selectable item. A click on it will close menus.
- */
-function isInSelectableItem(elem: Element): boolean {
-  const item = findMenuItem(elem);
-  return item ? isSelectable(item) : false;
 }
 
 /**
