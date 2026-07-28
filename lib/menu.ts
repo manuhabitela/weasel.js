@@ -495,9 +495,11 @@ function isMenuContainer(elem: Element|null) {
  */
 function isSelectable(elem: Element): elem is HTMLElement {
   // Offset height > 0 is used to determine if the element is visible.
-  return elem.hasAttribute('tabIndex') &&
-    !(elem.classList.contains('disabled') || elem.getAttribute('aria-disabled') === 'true') &&
-    (elem as HTMLElement).offsetHeight > 0;
+  return elem.hasAttribute('tabIndex') && !isDisabled(elem) && (elem as HTMLElement).offsetHeight > 0;
+}
+
+function isDisabled(elem: Element): boolean {
+  return elem?.classList.contains('disabled') || elem?.getAttribute('aria-disabled') === 'true';
 }
 
 /**
@@ -586,9 +588,7 @@ export function menuItemSubmenu(
 
     // Clicks that open a submenu should not cause parent menu to close.
     dom.on('click', (ev, elem) => {
-      if (options.action &&
-        !(elem.classList.contains('disabled') || elem.getAttribute('aria-disabled') === 'true')
-      ) {
+      if (options.action && !isDisabled(elem)) {
         options.action(elem, ev);
       } else {
         ev.stopPropagation();
