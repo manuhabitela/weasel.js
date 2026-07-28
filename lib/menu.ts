@@ -116,15 +116,20 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
     (objValue: any, srcValue: any) => Array.isArray(srcValue) ? srcValue : undefined);
 
   const isInput = triggerElem.tagName.toLowerCase() === 'input';
+  // We don't do anything for input menus as they require a different approach to work correctly with
+  // screen readers (not implemented).
   if (!isInput) {
+    if (!triggerElem.id) {
+      triggerElem.id = uniqueId(weaselIdPrefix);
+    }
+    // The aria-expanded attr makes screen readers (SR) announce that the button is expandable, when focus is on it.
+    // We don't want to announce that when the trigger is not a normal click/keypress, for example a contextmenu event.
+    // Otherwise SR users might try to activate the button with Enter and get confused why it doesn't work.
     const useExpandedAttr = options.trigger?.some(t =>
       t === "click" || isEqual(t, {keys: ['Enter']})
     );
     if (useExpandedAttr) {
       triggerElem.setAttribute('aria-expanded', 'false');
-    }
-    if (!triggerElem.id) {
-      triggerElem.id = uniqueId(weaselIdPrefix);
     }
   }
 
@@ -139,7 +144,7 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
  * The item is generated with tabindex="-1". To generate a menu item that is not selectable,
  * set its "aria-disabled" attribute to "true" with additional args.
  *
- * The appearance of the menuItem components can be changed by setting the followingcss variables
+ * The appearance of the menuItem components can be changed by setting the following css variables
  * in the parent project:
  *    --weaseljs-selected-background-color
  *    --weaseljs-selected-color
@@ -182,6 +187,23 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
   );
 }
 
+/**
+ * A group of menu items with a visible heading, that is correctly announced
+ * by screen readers.
+ *
+ * You should use a menuGroup instead of manually building a menu
+ * that has a heading and menu items as siblings. Otherwise, screen readers won't correctly
+ * announce the items relationships to the user.
+ *
+ * Example:
+ *   menu(() => [
+ *     menuItem(() => {}, 'Ungrouped item'),
+ *     menuGroup('Grouped items header',
+ *       menuItem(() => {}, 'Grouped item 1'),
+ *       menuItem(() => {}, 'Grouped item 2'),
+ *     ),
+ *   ]),
+ */
 export function menuGroup(heading: DomElementArg, ...args: DomElementArg[]): Element {
   const headingId = uniqueId(weaselIdPrefix);
   return cssMenuGroup(
@@ -223,7 +245,7 @@ export const defaultMenuOptions: IMenuOptions = {
  * Update the few ARIA attributes related to toggling on/off a menu popup related to a trigger element.
  */
 export function updateListAria(
-  menu: BaseMenu,
+  owner: BaseMenu,
   triggerElem: Element,
   listElem: HTMLElement,
   options: { role: 'menu' | 'listbox' },
@@ -234,6 +256,8 @@ export function updateListAria(
   if (options.role === 'listbox') {
     listElem.setAttribute('aria-orientation', 'vertical');
   }
+  // The aria-expanded attribute is not always set on the trigger button, in case of a contextmenu trigger for example
+  // (see comment in `baseElem` above). Make sure to not add it by mistake in that case.
   if (triggerElem.hasAttribute('aria-expanded')) {
     triggerElem.setAttribute('aria-expanded', 'true');
   }
@@ -242,7 +266,8 @@ export function updateListAria(
   if (options.role === 'menu' && triggerElem.id && !listElem.getAttribute('aria-labelledby')) {
     listElem.setAttribute('aria-labelledby', triggerElem.id);
   }
-  menu.onDispose(() => {
+  owner.onDispose(() => {
+    // See comment above when setting the aria-expanded attribute.
     if (triggerElem.hasAttribute('aria-expanded')) {
       triggerElem.setAttribute('aria-expanded', 'false');
     }
@@ -294,6 +319,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
           ArrowDown: () => this.nextIndex(),
           ArrowUp: () => this.prevIndex(),
           ArrowLeft: options.isSubMenu ? () => ctl.close(0) : () => {},
+          // We disable the right arrow key in case a global shortcut bound to it would collide
           ArrowRight: () => {}
         }),
         (el) => options.modifyContent?.(el, ctl)
