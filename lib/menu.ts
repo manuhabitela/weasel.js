@@ -220,9 +220,22 @@ export function menuGroup(heading: DomElementArg, ...args: DomElementArg[]): Ele
  * A version of menuItem that's an <a> link element.
  */
 export function menuItemLink(...args: DomElementArg[]): Element {
-  return cssMenuItemLink({tabindex: '-1', role: 'menuitem'}, cssMenuItem.cls(''), ...args,
+  const preventActionIfDisabled = (ev: Event, item: HTMLElement) => {
+    if (isDisabled(item)) {
+      ev.preventDefault();
+      return;
+    }
+  }
+  return cssMenuItemLink(
+    {tabindex: '-1', role: 'menuitem'},
+    cssMenuItem.cls(''),
+    ...args,
+    dom.on('click', preventActionIfDisabled),
     // This prevents propagation, but NOT the default action, which is to open the link.
-    onKeyDown({Enter$: (ev) => ev.stopPropagation()})
+    onKeyDown({Enter$: (ev, item) => {
+      ev.stopPropagation();
+      return preventActionIfDisabled(ev, item);
+    }})
   );
 }
 
@@ -637,7 +650,9 @@ export const cssMenuItem = styled('li', `
     background-color: var(--weaseljs-selected-background-color, #5AC09C);
     color:            var(--weaseljs-selected-color, white);
   }
-  &.disabled, &[aria-disabled="true"] {
+  &.disabled, &[aria-disabled="true"],
+  &.disabled:hover, &[aria-disabled="true"]:hover,
+  &.disabled:focus, &[aria-disabled="true"]:focus {
     color: grey;
   }
 `);
@@ -664,6 +679,9 @@ export const cssMenuItemLink = styled('a', `
   }
   &.${cssMenuItem.className}-sel {
     color: var(--weaseljs-selected-color, white);
+  }
+  &.disabled, &[aria-disabled="true"] {
+    cursor: default;
   }
 `);
 
