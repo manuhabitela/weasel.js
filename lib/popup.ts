@@ -230,7 +230,14 @@ export class PopupControl<T extends IPopupOptions = IPopupOptions> extends Dispo
           // Call instances of AttachTriggerFunc to attach any custom trigger events.
           trigger(triggerElem, this);
         } else if (typeof trigger === "object" && "keys" in trigger) {
-          dom.onElem(triggerElem, 'keydown', (ev) => trigger.keys.includes(ev.key) && this.toggle());
+          dom.onElem(triggerElem, 'keydown', (ev) => {
+            // <button> elements programmatically trigger a click event when the Enter key is pressed,
+            // so we need to avoid double triggering the popup in case click + Enter are registered as triggers in that case.
+            const avoidDoubleTrigger = triggerElem.tagName === 'BUTTON' && options.trigger?.includes('click') && ev.key === 'Enter';
+            if (trigger.keys.includes(ev.key) && !avoidDoubleTrigger) {
+              this.toggle();
+            }
+          });
         } else {
           switch (trigger) {
             case 'click':

@@ -52,7 +52,7 @@ function setupTest() {
         parentSelectorToMark: '.' + cssExample.className
       })
     ),
-    cssButton('My Funky Menu', menu(makeFunkyMenu, funkyOptions)),
+    dom('button', 'My Funky Menu', menu(makeFunkyMenu, funkyOptions)),
     cssButton('My Menu that allow nothing selected',
       {tabindex: '-1'},
       testId('btn5'),
