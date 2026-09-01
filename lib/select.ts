@@ -81,7 +81,7 @@ export function select<T>(
     cssBtnText(
       dom.domComputed(selected, sel => renderOption(sel))
     ),
-    dom('div', {style: 'flex: none;'},
+    dom('div', {'aria-hidden': 'true', style: 'flex: none;'},
       options.buttonArrow
     ),
     dom.on('keydown', (ev) => {
