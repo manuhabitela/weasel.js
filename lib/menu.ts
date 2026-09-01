@@ -2,17 +2,18 @@
  * A menu is a collection of menu items. Besides holding the items, it also knows which item is
  * selected, and allows selection via the keyboard.
  *
- * The standard menu item offers enough flexibility to suffice for many needs, and may be replaced
- * entirely by a custom item. For an item to be a selectable menu item, it needs `tabindex=-1`
- * attribute set, and a role of either "menuitem", "menuitemcheckbox"[1], or "option" (for selects).
- * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[2],
- * the item will not be selectable.
+ * The standard menu item helpers (`menuItem` and `menuItemCheckbox`) offer enough flexibility to suffice for many needs,
+ * and may be replaced entirely by custom items.
+ * For an item to be a selectable menu item, it needs `tabindex=-1` attribute set, and a role of either
+ * "menuitem", "menuitemcheckbox", or "option" (for selects).
+ * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[1],
+ * the item will not be selectable[2].
  *
- * [1] you should use the `menuItemCheckbox` helper to build checkbox menu items to make sure they are
- * compatible with assistive technologies.
- *
- * [2] Note that using "aria-disabled" is preferred over the "disabled" class for compatibility
+ * [1] Using "aria-disabled" is preferred over the "disabled" class for compatibility
  * with assistive technologies.
+ *
+ * [2] A non-selectable custom item can still be clicked. When building a custom menu item,
+ * make sure to use the `isSelectable` helper in your click callback to decide if its action should be triggered.
  *
  * Further, if `dom.dataElem(elem, 'menuItemSelected', (yesNo: boolean, elem) => {})` is set, that
  * callback will be called whenever the item is selected and unselected. In addition, the selected
@@ -463,12 +464,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
   }
 
   private _getSelectables() {
-    const selectables = this._menuContent.querySelectorAll(
-      ':is([role="menuitem"], [role="menuitemcheckbox"], [role="option"]):not([aria-disabled="true"], .disabled)'
-    );
-    return Array.from(selectables).filter(child =>
-      (child as HTMLElement).offsetHeight > 0
-    );
+    return Array.from(this._menuContent.querySelectorAll('[tabindex]')).filter(item => isSelectable(item));
   }
 
   /**
@@ -532,9 +528,12 @@ function isMenuContainer(elem: Element|null) {
 /**
  * Returns a boolean indicating whether the Element is selectable in the menu.
  */
-function isSelectable(elem: Element): elem is HTMLElement {
+export function isSelectable(elem: Element): elem is HTMLElement {
   // Offset height > 0 is used to determine if the element is visible.
-  return elem.hasAttribute('tabIndex') && !isDisabled(elem) && (elem as HTMLElement).offsetHeight > 0;
+  return elem.hasAttribute('tabIndex')
+    && ['menuitem', 'menuitemcheckbox', 'option'].includes(elem.getAttribute('role') || '')
+    && !isDisabled(elem)
+    && (elem as HTMLElement).offsetHeight > 0;
 }
 
 function isDisabled(elem: Element): boolean {

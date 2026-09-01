@@ -3,7 +3,7 @@
  */
 // tslint:disable:no-console
 import {dom, DomElementArg, input, makeTestId, obsArray, observable, styled, TestId} from 'grainjs';
-import {cssMenuDivider, menu, menuGroup, menuItem, menuItemCheckbox, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
+import {cssMenuDivider, cssMenuItem, isSelectable, menu, menuGroup, menuItem, menuItemCheckbox, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
 import {IOpenController, PopupControl} from '../../index';
 import {autocomplete, inputMenu, select} from '../../index';
 
@@ -178,6 +178,18 @@ function makeMenu(ctl: IOpenController): DomElementArg[] {
     }), "popup", testId('popup-open')
     ),
     makeCheckboxItem('Checkbox test'),
+    dom(
+      'div',
+      'Non-selectable (no tabindex)',
+      {role: 'menuitem', class: cssMenuItem.className},
+      dom.on('click', (_, elem) => isSelectable(elem) && lastAction.set('Non-selectable (no tabindex)'))
+    ),
+    dom(
+      'div',
+      'Non-selectable (no role)',
+      {tabindex: '-1', class: cssMenuItem.className},
+      dom.on('click', (_, elem) => isSelectable(elem) && lastAction.set('Non-selectable (no role)'))
+    ),
     cssMenuDivider(),
     menuItemSubmenu(makePasteSubmenu, {
       expandIcon: () => dom('div', '->'),
