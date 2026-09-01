@@ -90,6 +90,21 @@ describe('select', () => {
     await driver.sendKeys(Key.ESCAPE);
   });
 
+  it('should handle the selected element being disabled', async function() {
+    await driver.find('.test-btn4b').click();
+    await driver.findWait('.test-select-dropdown', 100);
+    const bob = await driver.findContent('li', /Bob/);
+    assert.isTrue(await bob.matches('[class*=-sel]'), 'Selected element on open should be the disabled one (Bob)');
+
+    await driver.sendKeys(Key.DOWN);
+    await driver.sendKeys(Key.UP);
+    const notBob = await driver.findContent('li', /Wolfesch/);
+    assert.isTrue(await notBob.matches('[class*=-sel]'), 'Navigation should avoid the selected-but-disabled element');
+
+    await driver.sendKeys(Key.ESCAPE);
+    assert.equal(await driver.find('.test-btn4b').getText(), 'Bob', 'Escaping should keep the disabled element as value (Bob)');
+  });
+
   it('should allow typing to change selection when open', async function() {
     // Open the menu, type, and check selected.
     await driver.find('.test-btn4').click();

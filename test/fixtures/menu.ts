@@ -110,7 +110,9 @@ function setupTest() {
       ]),
     ),
     makeSelect(),
-    makeComplexSelect(),
+    makeComplexSelect({buttonTestId: 'btn4', defaultValue: 0}),
+    // Same select, but we test if it works with a disabled item as the current value.
+    makeComplexSelect({buttonTestId: 'btn4b', defaultValue: employees.get().find((e) => e.disabled)?.value ?? 0}),
     cssInputContainer(
       cssInput(inputObs, {onInput: true}, {placeholder: 'My Input Menu'},
         inputMenu(makeInputMenu, {trigger: [inputTrigger], attach: null, menuCssClass: cssInputMenu.className}),
@@ -255,10 +257,10 @@ function makeSelect() {
   );
 }
 
-function makeComplexSelect() {
+function makeComplexSelect({buttonTestId, defaultValue}: {buttonTestId: string, defaultValue: number}) {
   console.log("makeComplexSelect");
-  const employee = observable(0);
-  const btnElem = cssSelectBtn(testId('btn4'));
+  const employee = observable(defaultValue);
+  const btnElem = cssSelectBtn(testId(buttonTestId));
   const menuCssClass = dom('div', testId('select-dropdown')).className;
   return select(employee, employees, {
     defaultLabel: "Employee:",
