@@ -26,7 +26,6 @@ import {Disposable, onKeyDown, onKeyElem} from 'grainjs';
 import defaultsDeep = require('lodash/defaultsDeep');
 import mergeWith = require('lodash/mergeWith');
 import uniqueId = require('lodash/uniqueId');
-import isEqual = require('lodash/isEqual');
 import {IOpenController, IPopupContent, IPopupOptions, PopupControl, setPopupToFunc} from './popup';
 import {ISelectOptions} from './select';
 
@@ -125,7 +124,7 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
     // We don't want to announce that when the trigger is not a normal click/keypress, for example a contextmenu event.
     // Otherwise SR users might try to activate the button with Enter and get confused why it doesn't work.
     const useExpandedAttr = options.trigger?.some(t =>
-      t === "click" || isEqual(t, {keys: ['Enter']})
+      t === "click" || (typeof t === 'object' && t.keys?.includes('Enter'))
     );
     if (useExpandedAttr) {
       triggerElem.setAttribute('aria-expanded', 'false');
