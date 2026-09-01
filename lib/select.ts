@@ -71,6 +71,7 @@ export function select<T>(
   const selectBtn: HTMLElement = cssSelectBtn(
     {
       tabIndex: '0',
+      type: 'button',
       class: options.buttonCssClass || '',
       'aria-haspopup': 'listbox',
       'aria-expanded': 'false',
