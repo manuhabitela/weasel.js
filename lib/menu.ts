@@ -383,10 +383,11 @@ export class BaseMenu extends Disposable implements IPopupContent {
         Escape: () => ctl.close(0),
         ...(options.isSubMenu ? {} : {
           Enter: () => ctl.close(0),    // gets bubbled key after action is taken.
-          // prevent using the Tab key to navigate: we use arrow keys
+          // Prevent using the Tab key to navigate: we use arrow keys. Closes the menu, per the ARIA pattern.
           Tab: (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
+            ctl.close(0);
           },
         }),
       }),

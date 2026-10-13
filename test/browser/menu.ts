@@ -120,6 +120,27 @@ describe('menu', () => {
     await assertOpen('.test-menu1', false);
   });
 
+  it('should close on Tab', async function() {
+    await driver.find('.test-btn1').click();
+    await assertOpen('.test-menu1', true);
+    await driver.sendKeys(Key.DOWN);
+    assert.equal(await driver.find('.test-cut').hasFocus(), true);
+
+    await driver.sendKeys(Key.TAB);
+    await assertOpen('.test-menu1', false);
+    assert.equal(await driver.find('.test-btn1').hasFocus(), true);
+
+    // Shift+Tab does the same.
+    await driver.find('.test-btn1').click();
+    await assertOpen('.test-menu1', true);
+    await driver.sendKeys(Key.DOWN);
+    assert.equal(await driver.find('.test-cut').hasFocus(), true);
+
+    await driver.sendKeys(Key.chord(Key.SHIFT, Key.TAB));
+    await assertOpen('.test-menu1', false);
+    assert.equal(await driver.find('.test-btn1').hasFocus(), true);
+  });
+
   it('should allow navigation and selection with keys', async function() {
     await driver.find('.test-btn1').click();
     await assertOpen('.test-menu1', true);
