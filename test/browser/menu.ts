@@ -210,6 +210,26 @@ describe('menu', () => {
     await driver.findWait('.test-submenu1', 1000);
     await assertOpen('.test-submenu1', true);
 
+    // Disabled nested submenu cannot be opened with Enter or Right.
+    const disabledSub = await driver.find('.test-sub-item-disabled');
+    await disabledSub.mouseMove();
+    assert.equal(await disabledSub.hasFocus(), true);
+    assert.equal(await disabledSub.getAttribute('aria-expanded'), 'false');
+
+    await driver.sendKeys(Key.ENTER);
+    assert.equal(await disabledSub.getAttribute('aria-expanded'), 'false');
+    assert.lengthOf(await driver.findAll('.test-submenu1'), 1);
+    await assertOpen('.test-submenu1', true);
+    await assertOpen('.test-menu1', true);
+    assert.equal(await driver.find('.test-last').getText(), '');
+
+    await driver.sendKeys(Key.RIGHT);
+    assert.equal(await disabledSub.getAttribute('aria-expanded'), 'false');
+    assert.lengthOf(await driver.findAll('.test-submenu1'), 1);
+    await assertOpen('.test-submenu1', true);
+    await assertOpen('.test-menu1', true);
+    assert.equal(await driver.find('.test-last').getText(), '');
+
     // Click on an item in the submenu runs the action and closes both menus.
     await driver.find('.test-copy2').click();
     assert.equal(await driver.find('.test-last').getText(), 'Copy2');

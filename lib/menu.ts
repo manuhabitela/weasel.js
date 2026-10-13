@@ -599,12 +599,24 @@ export function menuItemSubmenu(
     menu(submenu, popupOptions),
 
     // On mouseover, open the submenu. Add a delay to avoid it on transient mouseovers.
-    dom.on('mouseenter', () => ctl.open({showDelay: 200})),
+    dom.on('mouseenter', (_ev, elem) => {
+      if (!isDisabled(elem)) {
+        ctl.open({showDelay: 200});
+      }
+    }),
 
-    // On right-arrow, open the submenu immediately, and select the first item automatically.
+    // On right-arrow or Enter, open the submenu immediately, and select the first item automatically.
     onKeyDown({
-      ArrowRight: () => ctl.open({selectOnOpen: true}),
-      Enter: () => ctl.open({selectOnOpen: true}),
+      ArrowRight: (_ev, elem) => {
+        if (!isDisabled(elem)) {
+          ctl.open({selectOnOpen: true});
+        }
+      },
+      Enter: (_ev, elem) => {
+        if (!isDisabled(elem)) {
+          ctl.open({selectOnOpen: true});
+        }
+      },
     }),
 
     // When selection changes, use default behavior and also close the popup.
