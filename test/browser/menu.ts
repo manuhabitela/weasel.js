@@ -128,10 +128,18 @@ describe('menu', () => {
     assert.equal(await driver.find('.test-cut').hasFocus(), true);
     await driver.sendKeys(Key.DOWN);
     assert.equal(await driver.find('.test-copy').hasFocus(), true);
-    // Navigating toward a disabled element skips to the next enabled one.
+    // Disabled items are selectable: navigating lands on them.
+    await driver.sendKeys(Key.DOWN);
+    assert.equal(await driver.find('.test-disabled1').hasFocus(), true);
+    // ENTER on a disabled item does nothing and does not close the menu.
+    await driver.sendKeys(Key.ENTER);
+    await assertOpen('.test-menu1', true);
+    assert.equal(await driver.find('.test-last').getText(), '');
     await driver.sendKeys(Key.DOWN);
     assert.equal(await driver.find('.test-paste').hasFocus(), true);
-    // Navigating back up also skips the disabled element.
+    // Navigating back up also lands on the disabled element.
+    await driver.sendKeys(Key.UP);
+    assert.equal(await driver.find('.test-disabled1').hasFocus(), true);
     await driver.sendKeys(Key.UP);
     assert.equal(await driver.find('.test-copy').hasFocus(), true);
 
@@ -179,9 +187,9 @@ describe('menu', () => {
     // Move mouse to select another item.
     await driver.find('.test-cut').mouseMove();
     assert.equal(await driver.find('.test-cut').hasFocus(), true);
-    // Moving mouse over a disabled item deselects, leaves menu focused.
+    // Moving mouse over a disabled item selects it (disabled items are selectable).
     await driver.find('.test-disabled1').mouseMove();
-    assert.equal(await driver.find('.test-menu1').hasFocus(), true);
+    assert.equal(await driver.find('.test-disabled1').hasFocus(), true);
 
     // Move mouse to select an item again.
     await driver.find('.test-cut').mouseMove();
@@ -221,8 +229,8 @@ describe('menu', () => {
     await driver.sendKeys(Key.ENTER);
     await assertOpen('.test-submenu1', true);
 
-    // First non-disabled item should be selected.
-    assert.equal(await driver.find('.test-cut2').hasFocus(), true);
+    // First item is selected on open, including when it is disabled.
+    assert.equal(await driver.find('.test-disabled2').hasFocus(), true);
 
     // Clicking on a disabled element should do nothing. Menu should stay open, and no action
     // should run.
@@ -239,13 +247,16 @@ describe('menu', () => {
     // RIGHT key should reopen.
     await driver.sendKeys(Key.RIGHT);
     await assertOpen('.test-submenu1', true);
-    assert.equal(await driver.find('.test-cut2').hasFocus(), true);
+    assert.equal(await driver.find('.test-disabled2').hasFocus(), true);
 
     // UP/DOWN navigate.
     await driver.sendKeys(Key.DOWN);
-    assert.equal(await driver.find('.test-copy2').hasFocus(), true);
+    assert.equal(await driver.find('.test-cut2').hasFocus(), true);
     await driver.sendKeys(Key.UP, Key.UP);  // Wrap around top.
     assert.equal(await driver.find('.test-sub-item2b').hasFocus(), true);
+    await driver.sendKeys(Key.UP);
+    // Disabled submenu items are selectable too.
+    assert.equal(await driver.find('.test-sub-item-disabled').hasFocus(), true);
     await driver.sendKeys(Key.UP);
     assert.equal(await driver.find('.test-sub-item2').hasFocus(), true);
     await driver.sendKeys(Key.UP);
@@ -379,11 +390,11 @@ describe('menu', () => {
   it('should not hang when navigating a menu of only disabled items', async function() {
     await driver.find('.test-btn-only-disabled-items').click();
     await assertOpen('.test-only-disabled-items-menu', true);
-    // Nothing should be selected; arrow keys must not loop forever.
+    // Disabled items are selectable; arrow keys must not loop forever.
     await driver.sendKeys(Key.DOWN);
-    assert.deepEqual(await findSelected(), []);
-    await driver.sendKeys(Key.UP);
-    assert.deepEqual(await findSelected(), []);
+    assert.deepEqual(await findSelected(), ['Disabled stuff']);
+    await driver.sendKeys(Key.DOWN);
+    assert.deepEqual(await findSelected(), ['Disabled stuff']);
     await driver.sendKeys(Key.ESCAPE);
     await assertOpen('.test-only-disabled-items-menu', false);
   });

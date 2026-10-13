@@ -6,15 +6,16 @@
  * and may be replaced entirely by custom items.
  * For an item to be a selectable menu item, it needs `tabindex=-1` attribute set, and a role of either
  * "menuitem", "menuitemcheckbox", or "option" (for selects).
- * If there is no tabindex or role, if "aria-disabled" is set to "true", or if the "disabled" class is set[1],
- * the item will not be selectable[2].
  *
- * [1] Using "aria-disabled" is preferred over the "disabled" class for compatibility
+ * Disabled items (via "aria-disabled" attribute set to "true", or via the "disabled" class[1]) are not activatable
+ * but remain selectable. They can be reached with keyboard and highlighted on hover, matching the ARIA menu pattern.
+ * This is so that users of assistive tools like screen readers can be aware of disabled items.
+ *
+ * [1] Using the "aria-disabled" attribute is preferred over the "disabled" class for compatibility
  * with assistive technologies.
  *
- * [2] A non-selectable custom item can still be clicked, so when building a custom menu item,
- * make sure to use the `isSelectable` helper in your click callback to decide if its action should be triggered.
- * Note that clicking non-selectable items don't close the menu.
+ * When building a custom menu item, use `isActivatable` in your click/key callback to decide if its
+ * action should be triggered.
  *
  * Further, if `dom.dataElem(elem, 'menuItemSelected', (yesNo: boolean, elem) => {})` is set, that
  * callback will be called whenever the item is selected and unselected. In addition, the selected
@@ -141,7 +142,7 @@ function baseElem(createFn: MenuClassCons, triggerElem: Element, createFunc: Men
 /**
  * Implements a single menu item.
  *
- * The item is generated with tabindex="-1". To generate a menu item that is not selectable,
+ * The item is generated with tabindex="-1". To generate a menu item that can't be activated,
  * set its "aria-disabled" attribute to "true" with additional args.
  *
  * The appearance of the menuItem components can be changed by setting the following css variables
@@ -154,6 +155,7 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
   const triggerAction = (ev: Event, item: HTMLElement) => {
     if (isDisabled(item)) {
       ev.preventDefault();
+      ev.stopPropagation();
     } else {
       action(item, ev);
     }
@@ -174,13 +176,14 @@ export function menuItem(action: (item: HTMLElement, ev: Event) => void, ...args
  * You are expected to provide your own UI that reflects the observable as the item content.
  * A classic checkbox input element tied to the observable can be used.
  *
- * The item is generated with tabindex="-1". To generate a menu item that is not selectable,
+ * The item is generated with tabindex="-1". To generate a menu item that can't be activated,
  * set its "aria-disabled" attribute to "true" through the additional args.
  */
 export const menuItemCheckbox = (checked: Observable<boolean>, ...args: DomElementArg[]) => {
   const toggle = (ev: Event, item: HTMLElement) => {
     if (isDisabled(item)) {
       ev.preventDefault();
+      ev.stopPropagation();
       return;
     }
     // UI provided has chances to be a classic label+input pair. In that case, we prevent default's browser behavior
@@ -367,7 +370,7 @@ export class BaseMenu extends Disposable implements IPopupContent {
       // Events set on the parent of _menuContent receive events bubbled up from submenus.
       dom.on('click', (ev) => {
         const item = findMenuItem(ev.target as Element);
-        if (item && isSelectable(item)) {
+        if (item && isActivatable(item)) {
           // Items might be checkboxes, in that case we don't want to close the menu on click
           if (item.getAttribute('role') !== 'menuitemcheckbox') {
             ctl.close(0);
@@ -400,21 +403,21 @@ export class BaseMenu extends Disposable implements IPopupContent {
   }
 
   protected nextIndex(): void {
-    const selectables = this._getSelectables();
-    if (!selectables.length) { return; }
-    const next = this._getNextSelectable(
-      this._selected, (elem) => this._findSibling(elem, this._getMenuItems(), 'next'), selectables[0]
+    const items = this._getMenuItems();
+    if (!items.length) { return; }
+    const next = this._getNext(
+      this._selected, (elem) => this._findSibling(elem, items, 'next'), items[0]
     );
-    this.setSelected(next);
+    this.setSelected(next as HTMLElement|null);
   }
 
   protected prevIndex(): void {
-    const selectables = this._getSelectables();
-    if (!selectables.length) { return; }
-    const next = this._getNextSelectable(
-      this._selected, (elem) => this._findSibling(elem, this._getMenuItems(), 'prev'), selectables[selectables.length - 1]
+    const items = this._getMenuItems();
+    if (!items.length) { return; }
+    const next = this._getNext(
+      this._selected, (elem) => this._findSibling(elem, items, 'prev'), items[items.length - 1]
     );
-    this.setSelected(next);
+    this.setSelected(next as HTMLElement|null);
   }
 
   private _findSibling(elem: Element | null, items: Element[], direction: 'next' | 'prev'): Element | null {
@@ -450,9 +453,9 @@ export class BaseMenu extends Disposable implements IPopupContent {
 
   private _onMouseOver(ev: MouseEvent) {
     if (!isMenuContainer(ev.target as Element)) {
-      // If we don't find an item or it's not selectable, intentionally deselect.
+      // If we don't find a menu item, intentionally deselect.
       const elem = findMenuItem(ev.target as Element);
-      this.setSelected(elem && isSelectable(elem) ? elem : null);
+      this.setSelected(elem && isMenuItem(elem) ? elem as HTMLElement : null);
     }
   }
 
@@ -466,24 +469,6 @@ export class BaseMenu extends Disposable implements IPopupContent {
 
   private _getMenuItems() {
     return Array.from(this._menuContent.querySelectorAll('[tabindex]')).filter(isMenuItem);
-  }
-
-  private _getSelectables() {
-    return this._getMenuItems().filter(isSelectable);
-  }
-
-  /**
-   * Given a starting Element, a function to retrieve the next Element and the element to start over
-   * after reaching the last sibling, returns the next selectable Element (based on
-   * isSelectable). Returns null if the function to retrieve the next Element returns null. Always
-   * returns startElem if returned by getNext function, to prevent an infinite loop.
-   */
-  private _getNextSelectable(startElem: Element|null,
-                             getNext: (elem: Element) => Element|null,
-                             firstElem: Element|null): HTMLElement|null {
-    let next = this._getNext(startElem, getNext, firstElem);
-    while (next && next !== startElem && !isSelectable(next)) { next = this._getNext(next, getNext, firstElem); }
-    return next as HTMLElement|null;
   }
 
   private _getNext(elem: Element|null,
@@ -539,9 +524,10 @@ function isMenuItem(elem: Element): boolean {
 }
 
 /**
- * Returns a boolean indicating whether the Element is selectable in the menu.
+ * Returns whether the Element can be activated (action run, menu closed on click/Enter).
+ * Disabled menu items remain selectable (focus/hover) but are not activatable.
  */
-export function isSelectable(elem: Element): elem is HTMLElement {
+export function isActivatable(elem: Element): boolean {
   return isMenuItem(elem) && !isDisabled(elem);
 }
 
@@ -673,9 +659,9 @@ export const cssMenuItem = styled('li', `
     background-color: var(--weaseljs-selected-background-color, #5AC09C);
     color:            var(--weaseljs-selected-color, white);
   }
-  &.disabled, &[aria-disabled="true"],
-  &.disabled:hover, &[aria-disabled="true"]:hover,
-  &.disabled:focus, &[aria-disabled="true"]:focus {
+  &:is(.disabled, [aria-disabled="true"]),
+  &:is(.disabled, [aria-disabled="true"]):is(:hover, :focus) {
+    cursor: default;
     color: grey;
   }
 `);
@@ -702,9 +688,6 @@ export const cssMenuItemLink = styled('a', `
   }
   &.${cssMenuItem.className}-sel {
     color: var(--weaseljs-selected-color, white);
-  }
-  &.disabled, &[aria-disabled="true"] {
-    cursor: default;
   }
 `);
 

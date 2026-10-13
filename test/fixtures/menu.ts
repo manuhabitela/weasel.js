@@ -3,7 +3,7 @@
  */
 // tslint:disable:no-console
 import {dom, DomElementArg, input, IOption, makeTestId, MaybeObsArray, obsArray, observable, styled, TestId} from 'grainjs';
-import {cssMenuDivider, cssMenuItem, isSelectable, menu, menuGroup, menuItem, menuItemCheckbox, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
+import {cssMenuDivider, cssMenuItem, isActivatable, menu, menuGroup, menuItem, menuItemCheckbox, menuItemLink, menuItemSubmenu, popupOpen} from '../../index';
 import {IOpenController, PopupControl} from '../../index';
 import {autocomplete, inputMenu, select} from '../../index';
 
@@ -99,6 +99,8 @@ function setupTest() {
           testId('only-disabled-items-menu'),
           menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
           menuItem(() => {}, 'Disabled stuff', dom.attr('aria-disabled', 'true')),
+          makeCheckboxItem('Disabled checkbox', {"aria-disabled": "true"}),
+          menuItemLink({href: 'https://getgrist.com'}, 'Disabled link', {"aria-disabled": "true"}),
           menuItem(() => {}, 'Disabled stuff', dom.cls('disabled')),
         ]),
       ),
@@ -113,14 +115,14 @@ function setupTest() {
             'div',
             'Non-selectable (no tabindex)',
             {role: 'menuitem', class: cssMenuItem.className},
-            dom.on('click', (_, elem) => isSelectable(elem) && lastAction.set('Non-selectable (no tabindex)'))
+            dom.on('click', (_, elem) => isActivatable(elem) && lastAction.set('Non-selectable (no tabindex)'))
           ),
           menuItem(() => lastAction.set("Hola"), "Hola", testId('hola')),
           dom(
             'div',
             'Non-selectable (no role)',
             {tabindex: '-1', class: cssMenuItem.className},
-            dom.on('click', (_, elem) => isSelectable(elem) && lastAction.set('Non-selectable (no role)'))
+            dom.on('click', (_, elem) => isActivatable(elem) && lastAction.set('Non-selectable (no role)'))
           ),
           menuItem(() => {}, 'Goodbye', dom.attr('aria-disabled', 'true')),
           menuItem(() => lastAction.set("Bonjour"), "Bonjour", testId('bonjour')),
@@ -136,6 +138,7 @@ function setupTest() {
             menuItem(() => lastAction.set('Grouped item click 1'), 'Grouped item 1', testId('grouped-item1')),
             menuItem(() => lastAction.set('Grouped item click 2'), 'Grouped item 2', testId('grouped-item2')),
             menuItemSubmenu(makePasteSubmenu, {}, 'Grouped submenu', testId('grouped-sub-item')),
+            menuItemSubmenu(makePasteSubmenu, {}, 'Grouped submenu (disabled)', testId('grouped-sub-item-disabled'), {"aria-disabled": "true"}),
           ),
           menuGroup('Grouped items header 2',
             menuItem(() => lastAction.set('Grouped item click 2.1'), 'Grouped item 2.1'),
@@ -196,7 +199,7 @@ function makeMenu(ctl: IOpenController): DomElementArg[] {
     menuItem(() => lastAction.set("Cut"), "Cut", dom.hide(hideCut), testId('cut')),
     menuItem(() => lastAction.set("Copy"), "Copy", testId('copy')),
     menuItem(() => lastAction.set("Disabled (should not happen!)"),
-      dom.cls('disabled'), "Disabled", testId('disabled1')
+      dom.attr("aria-disabled", "true"), "Disabled", testId('disabled1')
     ),
     menuItem(() => {
       lastAction.set("Paste");
@@ -230,12 +233,13 @@ function makePasteSubmenu(): DomElementArg[] {
   return [
     testId('submenu1'),
     menuItem(() => lastAction.set('Disabled (should not happen!)'), "Disabled",
-      {class: 'disabled'}, testId('disabled2')),
+      {"aria-disabled": 'true'}, testId('disabled2')),
     menuItem(() => lastAction.set('Cut2'), "Cut2", testId('cut2')),
     menuItem(() => lastAction.set('Copy2'), "Copy2", testId('copy2')),
     menuItem(() => lastAction.set('Paste2'), "Paste2", testId('paste2')),
     makeCheckboxItem('Checkbox test', testId('sub-item-checkbox')),
     menuItemSubmenu(makePasteSubmenu, {}, "Paste Special2", testId('sub-item2')),
+    menuItemSubmenu(makePasteSubmenu, {}, "Disabled submenu", testId('sub-item-disabled'), {"aria-disabled": "true"}),
     menuItemSubmenu(makePasteSubmenu, {}, "Paste Special2 with really long text", testId('sub-item2b')),
   ];
 }

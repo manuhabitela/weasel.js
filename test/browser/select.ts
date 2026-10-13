@@ -101,8 +101,11 @@ describe('select', () => {
     assert.isTrue(await german.matches('[class*=-sel]'), 'Selected element after down arrow should be the next one (German)');
 
     await driver.sendKeys(Key.UP);
+    assert.isTrue(await french.matches('[class*=-sel]'), 'Selected element after up arrow should be French again (disabled options are selectable)');
+
+    await driver.sendKeys(Key.UP);
     const english = await driver.findContent('li', /English/);
-    assert.isTrue(await english.matches('[class*=-sel]'), 'Selected element after up arrow should be the one before French (English)');
+    assert.isTrue(await english.matches('[class*=-sel]'), 'Selected element after another up arrow should be English');
 
     await driver.sendKeys(Key.ESCAPE);
     assert.match(await driver.find('.test-btn4b').getText(), /French/, 'Escaping should keep the disabled element as value (French)');
